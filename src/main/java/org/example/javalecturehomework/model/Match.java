@@ -58,5 +58,16 @@ public class Match {
         this.id = id;
     }
 
+    @Override
+    public String toString() {
+        return "Match{" +
+                "id=" + id +
+                ", mdate=" + mdate +
+                ", startsAt=" + startsAt +
+                ", ticketPrice=" + ticketPrice +
+                ", mtype='" + mtype + '\'' +
+                '}';
+    }
+
     // Getters and setters here
 }
