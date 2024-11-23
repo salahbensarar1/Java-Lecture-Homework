@@ -4,9 +4,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.util.Callback;
 import org.example.javalecturehomework.model.Entry;
 import org.example.javalecturehomework.model.Match;
@@ -16,6 +14,17 @@ import java.sql.*;
 
 public class DatabaseMenuController {
 
+    @FXML
+    private ComboBox<String> filterComboBox;
+
+    @FXML
+    private TextField filterTextField;
+
+    @FXML
+    private RadioButton filterRadioButton;
+
+    @FXML
+    private CheckBox filterCheckBox;
     @FXML
     private ComboBox<String> tableComboBox;
     @FXML
@@ -38,7 +47,10 @@ public class DatabaseMenuController {
         // Initialize ComboBox with table names
         tableComboBox.getItems().addAll("matches", "entries", "spectators");
         tableComboBox.setOnAction(event -> fetchData());
-
+        tableComboBox.setOnAction(event -> {
+            fetchData();
+            setupFilterOptions();
+        });
         // Initialize database connection
         try {
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
@@ -46,6 +58,22 @@ public class DatabaseMenuController {
             e.printStackTrace();
         }
     }
+
+    private void setupFilterOptions() {
+        String selectedTable = tableComboBox.getSelectionModel().getSelectedItem();
+        if (selectedTable == null) return;
+
+        filterComboBox.getItems().clear();
+
+        if (selectedTable.equals("matches")) {
+            filterComboBox.getItems().addAll("ID", "Match Date", "Start Time", "Ticket Price", "Match Type");
+        } else if (selectedTable.equals("entries")) {
+            filterComboBox.getItems().addAll("Spectator ID", "Match ID", "Timestamp");
+        } else if (selectedTable.equals("spectators")) {
+            filterComboBox.getItems().addAll("ID", "Name", "Gender", "Has Pass");
+        }
+    }
+
 
     private void fetchData() {
         String selectedTable = tableComboBox.getSelectionModel().getSelectedItem();
@@ -90,24 +118,91 @@ public class DatabaseMenuController {
     }
 
     private void updateTableView(String selectedTable, ObservableList<Object> data) {
-        dataTable.setItems(data);
+        // Clear previous columns
+        dataTable.getColumns().clear();
 
         if (selectedTable.equals("matches")) {
-            column1.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Match) cellData.getValue()).getId())));
-            column2.setCellValueFactory(cellData -> new SimpleStringProperty(((Match) cellData.getValue()).getMdate().toString()));
-            column3.setCellValueFactory(cellData -> new SimpleStringProperty(((Match) cellData.getValue()).getStartsAt().toString()));
-            column4.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Match) cellData.getValue()).getTicketPrice())));
-            column5.setCellValueFactory(cellData -> new SimpleStringProperty(((Match) cellData.getValue()).getMtype()));
+            TableColumn<Object, String> idColumn = new TableColumn<>("ID");
+            idColumn.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Match) cellData.getValue()).getId())));
+
+            TableColumn<Object, String> dateColumn = new TableColumn<>("Match Date");
+            dateColumn.setCellValueFactory(cellData -> new SimpleStringProperty(((Match) cellData.getValue()).getMdate().toString()));
+
+            TableColumn<Object, String> startColumn = new TableColumn<>("Start Time");
+            startColumn.setCellValueFactory(cellData -> new SimpleStringProperty(((Match) cellData.getValue()).getStartsAt().toString()));
+
+            TableColumn<Object, String> priceColumn = new TableColumn<>("Ticket Price");
+            priceColumn.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Match) cellData.getValue()).getTicketPrice())));
+
+            TableColumn<Object, String> typeColumn = new TableColumn<>("Match Type");
+            typeColumn.setCellValueFactory(cellData -> new SimpleStringProperty(((Match) cellData.getValue()).getMtype()));
+
+            dataTable.getColumns().addAll(idColumn, dateColumn, startColumn, priceColumn, typeColumn);
         } else if (selectedTable.equals("entries")) {
-            column1.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Entry) cellData.getValue()).getSpectatorId())));
-            column2.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Entry) cellData.getValue()).getMatchId())));
-            column3.setCellValueFactory(cellData -> new SimpleStringProperty(((Entry) cellData.getValue()).getTimestamp().toString()));
+            TableColumn<Object, String> spectatorColumn = new TableColumn<>("Spectator ID");
+            spectatorColumn.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Entry) cellData.getValue()).getSpectatorId())));
+
+            TableColumn<Object, String> matchColumn = new TableColumn<>("Match ID");
+            matchColumn.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Entry) cellData.getValue()).getMatchId())));
+
+            TableColumn<Object, String> timestampColumn = new TableColumn<>("Timestamp");
+            timestampColumn.setCellValueFactory(cellData -> new SimpleStringProperty(((Entry) cellData.getValue()).getTimestamp().toString()));
+
+            dataTable.getColumns().addAll(spectatorColumn, matchColumn, timestampColumn);
         } else if (selectedTable.equals("spectators")) {
-            column1.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Spectator) cellData.getValue()).getId())));
-            column2.setCellValueFactory(cellData -> new SimpleStringProperty(((Spectator) cellData.getValue()).getSname()));
-            column3.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Spectator) cellData.getValue()).isMale())));
-            column4.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Spectator) cellData.getValue()).hasPass())));
+            TableColumn<Object, String> idColumn = new TableColumn<>("ID");
+            idColumn.setCellValueFactory(cellData -> new SimpleStringProperty(String.valueOf(((Spectator) cellData.getValue()).getId())));
+
+            TableColumn<Object, String> nameColumn = new TableColumn<>("Name");
+            nameColumn.setCellValueFactory(cellData -> new SimpleStringProperty(((Spectator) cellData.getValue()).getSname()));
+
+            TableColumn<Object, String> genderColumn = new TableColumn<>("Gender");
+            genderColumn.setCellValueFactory(cellData -> new SimpleStringProperty(((Spectator) cellData.getValue()).isMale() ? "Male" : "Female"));
+
+            TableColumn<Object, String> passColumn = new TableColumn<>("Has Pass");
+            passColumn.setCellValueFactory(cellData -> new SimpleStringProperty(((Spectator) cellData.getValue()).hasPass() ? "Yes" : "No"));
+
+            dataTable.getColumns().addAll(idColumn, nameColumn, genderColumn, passColumn);
         }
+
+        // Set the data
+        dataTable.setItems(data);
+    }
+
+    private String buildFilteredQuery(String tableName, String column, String value, boolean includeSpecialItems, boolean filterOptionEnabled) {
+        String query = "SELECT * FROM " + tableName + " WHERE ";
+
+        // Map column names to database fields
+        switch (tableName) {
+            case "matches":
+                if (column.equals("ID")) query += "id = " + value;
+                else if (column.equals("Match Date")) query += "mdate = '" + value + "'";
+                else if (column.equals("Start Time")) query += "startsAt = '" + value + "'";
+                else if (column.equals("Ticket Price")) query += "ticketPrice = " + value;
+                else if (column.equals("Match Type")) query += "mtype LIKE '%" + value + "%'";
+                break;
+            case "entries":
+                if (column.equals("Spectator ID")) query += "spectatorid = " + value;
+                else if (column.equals("Match ID")) query += "matchid = " + value;
+                else if (column.equals("Timestamp")) query += "timestamp = '" + value + "'";
+                break;
+            case "spectators":
+                if (column.equals("ID")) query += "id = " + value;
+                else if (column.equals("Name")) query += "sname LIKE '%" + value + "%'";
+                else if (column.equals("Gender")) query += "male = " + (value.equalsIgnoreCase("Male") ? 1 : 0);
+                else if (column.equals("Has Pass")) query += "haspass = " + (value.equalsIgnoreCase("Yes") ? 1 : 0);
+                break;
+        }
+
+        if (includeSpecialItems) {
+            query += " AND special = 1"; // Example of special condition
+        }
+
+        if (filterOptionEnabled) {
+            query += " ORDER BY " + column; // Example of filter option logic
+        }
+
+        return query;
     }
 
     private String buildQueryForTable(String tableName) {
@@ -128,11 +223,58 @@ public class DatabaseMenuController {
 
     @FXML
     private void handleRead2Action() {
-        System.out.println("Reading filtered data...");
-        // Implement the logic for reading filtered data
-        // You can add additional filter criteria before calling fetchData()
-        fetchData(); // Modify this to fetch filtered data as needed
+        String selectedColumn = filterComboBox.getSelectionModel().getSelectedItem();
+        String filterValue = filterTextField.getText();
+        boolean includeSpecialItems = filterCheckBox.isSelected();
+        boolean filterOptionEnabled = filterRadioButton.isSelected();
+
+        if (selectedColumn == null || filterValue.isEmpty()) {
+            System.out.println("Filter criteria are not set properly.");
+            return;
+        }
+
+        String selectedTable = tableComboBox.getSelectionModel().getSelectedItem();
+        if (selectedTable == null) return;
+
+        ObservableList<Object> data = FXCollections.observableArrayList();
+
+        String query = buildFilteredQuery(selectedTable, selectedColumn, filterValue, includeSpecialItems, filterOptionEnabled);
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet resultSet = stmt.executeQuery(query)) {
+
+            while (resultSet.next()) {
+                if (selectedTable.equals("matches")) {
+                    int id = resultSet.getInt("id");
+                    Date mdate = resultSet.getDate("mdate");
+                    Time startsAt = resultSet.getTime("startsAt");
+                    double ticketPrice = resultSet.getDouble("ticketPrice");
+                    String mtype = resultSet.getString("mtype");
+
+                    Match match = new Match(id, mdate, startsAt, ticketPrice, mtype);
+                    data.add(match);
+                } else if (selectedTable.equals("entries")) {
+                    int spectatorId = resultSet.getInt("spectatorid");
+                    int matchId = resultSet.getInt("matchid");
+                    Time timestamp = resultSet.getTime("timestamp");
+
+                    data.add(new Entry(spectatorId, matchId, timestamp));
+                } else if (selectedTable.equals("spectators")) {
+                    int id = resultSet.getInt("id");
+                    String sname = resultSet.getString("sname");
+                    boolean male = resultSet.getBoolean("male");
+                    boolean hasPass = resultSet.getBoolean("haspass");
+
+                    data.add(new Spectator(id, sname, male, hasPass));
+                }
+            }
+
+            updateTableView(selectedTable, data);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
+
 
     @FXML
     private void handleWriteAction() {
