@@ -5,41 +5,45 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.util.Callback;
 import org.example.javalecturehomework.model.Entry;
 import org.example.javalecturehomework.model.Match;
 import org.example.javalecturehomework.model.Spectator;
+import org.example.javalecturehomework.utils.DatabaseConnection;
 
+import java.awt.event.ActionEvent;
 import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DatabaseMenuController {
+//***************************************************************************************************************************************
 
-    @FXML
-    private ComboBox<String> filterComboBox;
 
-    @FXML
-    private TextField filterTextField;
+//    @FXML private ComboBox<String> matchComboBox, spectatorComboBox;
+    @FXML private Label formTitle, label1, label2, label3, label4, label5;
+    @FXML private TextField field1, field2, field3, field4, field5;
+    @FXML private Pane addDataPane;
+    @FXML private ComboBox<String> filterComboBox;
+    @FXML private TextField filterTextField;
+    @FXML private RadioButton filterRadioButton;
+    @FXML private CheckBox filterCheckBox;
+    @FXML private ComboBox<String> tableComboBox;
+    @FXML private TableView<Object> dataTable;
 
-    @FXML
-    private RadioButton filterRadioButton;
 
-    @FXML
-    private CheckBox filterCheckBox;
-    @FXML
-    private ComboBox<String> tableComboBox;
-    @FXML
-    private TableView<Object> dataTable;
-    @FXML
-    private TableColumn<Object, String> column1;
-    @FXML
-    private TableColumn<Object, String> column2;
-    @FXML
-    private TableColumn<Object, String> column3;
-    @FXML
-    private TableColumn<Object, String> column4;
-    @FXML
-    private TableColumn<Object, String> column5;
 
+    //private String selectedTable;
+//    @FXML
+//    private Button updateButton;
+//    @FXML
+//    private ComboBox<String> tableComboBox1;
+//
+//    private Map<String, String> selectedRowData;
+//***************************************************************************************************************************************
     private Connection connection;
 
     @FXML
@@ -58,7 +62,7 @@ public class DatabaseMenuController {
             e.printStackTrace();
         }
     }
-
+    //***************************************************************************************************************************************
     private void setupFilterOptions() {
         String selectedTable = tableComboBox.getSelectionModel().getSelectedItem();
         if (selectedTable == null) return;
@@ -73,7 +77,7 @@ public class DatabaseMenuController {
             filterComboBox.getItems().addAll("ID", "Name", "Gender", "Has Pass");
         }
     }
-
+//***************************************************************************************************************************************
 
     private void fetchData() {
         String selectedTable = tableComboBox.getSelectionModel().getSelectedItem();
@@ -116,7 +120,7 @@ public class DatabaseMenuController {
             e.printStackTrace();
         }
     }
-
+    //***************************************************************************************************************************************
     private void updateTableView(String selectedTable, ObservableList<Object> data) {
         // Clear previous columns
         dataTable.getColumns().clear();
@@ -168,7 +172,7 @@ public class DatabaseMenuController {
         // Set the data
         dataTable.setItems(data);
     }
-
+    //***************************************************************************************************************************************
     private String buildFilteredQuery(String tableName, String column, String value, boolean includeSpecialItems, boolean filterOptionEnabled) {
         String query = "SELECT * FROM " + tableName + " WHERE ";
 
@@ -204,14 +208,14 @@ public class DatabaseMenuController {
 
         return query;
     }
-
+    //***************************************************************************************************************************************
     private String buildQueryForTable(String tableName) {
         if (tableName.equals("matches")) {
-            return "SELECT * FROM matches LIMIT 10";
+            return "SELECT * FROM matches";
         } else if (tableName.equals("entries")) {
-            return "SELECT * FROM entries LIMIT 10";
+            return "SELECT * FROM entries";
         } else if (tableName.equals("spectators")) {
-            return "SELECT * FROM spectators LIMIT 10";
+            return "SELECT * FROM spectators";
         }
         return "";
     }
@@ -220,7 +224,7 @@ public class DatabaseMenuController {
         System.out.println("Reading data...");
         fetchData();  // Load the data based on the selected table
     }
-
+    //***************************************************************************************************************************************
     @FXML
     private void handleRead2Action() {
         String selectedColumn = filterComboBox.getSelectionModel().getSelectedItem();
@@ -274,21 +278,143 @@ public class DatabaseMenuController {
             e.printStackTrace();
         }
     }
+//***************************************************************************************************************************************
 
 
     @FXML
     private void handleWriteAction() {
-        System.out.println("Adding data...");
-        // Implement the logic for adding data to the database
-        // You can collect input from TextFields or other UI components here
+        String selectedTable = tableComboBox.getValue();
+
+        if (selectedTable == null) {
+            System.out.println("Please select a table first.");
+            return;
+        }
+
+        formTitle.setText("Add New Record to " + selectedTable);
+
+        // Set labels based on selected table
+        switch (selectedTable) {
+            case "matches":
+                label1.setText("ID");
+                label2.setText("Date");
+                label3.setText("Start Time");
+                label4.setText("Ticket Price");
+                label5.setText("Match Type");
+                break;
+            case "spectators":
+                label1.setText("ID");
+                label2.setText("Name");
+                label3.setText("Sex");
+                label4.setText("has Pass");
+                break;
+            case "entries":
+                label1.setText("Match ID");
+                label2.setText("Spectator ID");
+                label3.setText("Time Stamp");
+                break;
+            default:
+                System.out.println("Unknown table selected.");
+                return;
+        }
+
+        // Clear previous data in fields
+        field1.clear();
+        field2.clear();
+        field3.clear();
+        field4.clear();
+        field5.clear();
+
+        // Show the form
+        addDataPane.setVisible(true);
     }
 
+
+
     @FXML
-    private void handleChangeAction() {
-        System.out.println("Updating data...");
-        // Implement the logic for updating data in the database
-        // You can collect input from TextFields or other UI components
+    private void submitAddData() {
+        String selectedTable = tableComboBox.getValue();
+
+        // Validate selection and input
+        if (selectedTable == null) {
+            System.out.println("No table selected.");
+            return;
+        }
+
+        // Collect data from form
+        String value1 = field1.getText();
+        String value2 = field2.getText();
+        String value3 = field3.getText();
+        String value4 = field4.getText();
+        String value5 = field5.getText();
+
+        // Prepare query
+        String query = "";
+        switch (selectedTable) {
+            case "matches":
+                query = "INSERT INTO matches (id, mdate, startsat, ticketprice, mtype) VALUES (?, ?, ?, ?, ?)";
+                break;
+            case "spectators":
+                query = "INSERT INTO spectators  (id, sname, male, haspass) VALUES (?, ?, ?, ?)";
+                break;
+            case "entries":
+                query = "INSERT INTO entries (spectatorid, matchid, timestamp) VALUES (?, ?, ?)";
+                break;
+        }
+
+        // Execute query
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, value1);
+            stmt.setString(2, value2);
+            stmt.setString(3, value3);
+            stmt.setString(4, value4);
+            stmt.setString(5, value5);
+
+            int rowsAffected = stmt.executeUpdate();
+            System.out.println(rowsAffected > 0 ? "Record added successfully." : "Failed to add record.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        // Hide the form
+        addDataPane.setVisible(false);
     }
+
+
+    @FXML
+    private void cancelAddData() {
+        addDataPane.setVisible(false);
+    }
+
+
+//***************************************************************************************************************************************
+//***************************************************************************************************************************************
+//***************************************************************************************************************************************
+//***************************************************************************************************************************************
+
+    @FXML
+    public void handleChangeAction() {
+        System.out.println("Changing data...");
+    }
+    @FXML
+    public void handleUpdateRecord(javafx.event.ActionEvent actionEvent) {
+        System.out.println("Updating data...");
+    }
+    @FXML
+    public void handleRowSelect(MouseEvent mouseEvent) {
+        System.out.println("Row selected...");
+    }
+
+    //***************************************************************************************************************************************
+    //***************************************************************************************************************************************
+    //***************************************************************************************************************************************
+    //***************************************************************************************************************************************
+
+
+
+
+
 
     @FXML
     private void handleDeleteAction() {
@@ -296,4 +422,5 @@ public class DatabaseMenuController {
         // Implement the logic for deleting data from the database
         // You can use a selected row or some other criteria to delete data
     }
+
 }

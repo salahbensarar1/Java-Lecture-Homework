@@ -30,4 +30,5 @@ public class Spectator {
     public boolean hasPass() {
         return hasPass;
     }
+
 }
