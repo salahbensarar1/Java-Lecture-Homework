@@ -300,17 +300,47 @@ public class DatabaseMenuController {
                 label3.setText("Start Time");
                 label4.setText("Ticket Price");
                 label5.setText("Match Type");
+                label1.setVisible(true);
+                label2.setVisible(true);
+                label3.setVisible(true);
+                label4.setVisible(true);
+                label5.setVisible(true);
+                field1.setVisible(true);
+                field2.setVisible(true);
+                field3.setVisible(true);
+                field4.setVisible(true);
+                field5.setVisible(true);
                 break;
             case "spectators":
                 label1.setText("ID");
                 label2.setText("Name");
                 label3.setText("Sex");
                 label4.setText("has Pass");
+                label1.setVisible(true);
+                label2.setVisible(true);
+                label3.setVisible(true);
+                label4.setVisible(true);
+                label5.setVisible(false);
+                field1.setVisible(true);
+                field2.setVisible(true);
+                field3.setVisible(true);
+                field4.setVisible(true);
+                field5.setVisible(false);
                 break;
             case "entries":
                 label1.setText("Match ID");
                 label2.setText("Spectator ID");
                 label3.setText("Time Stamp");
+                label1.setVisible(true);
+                label2.setVisible(true);
+                label3.setVisible(true);
+                label4.setVisible(false);
+                label5.setVisible(false);
+                field1.setVisible(true);
+                field2.setVisible(true);
+                field3.setVisible(true);
+                field4.setVisible(false);
+                field5.setVisible(false);
                 break;
             default:
                 System.out.println("Unknown table selected.");
@@ -349,27 +379,33 @@ public class DatabaseMenuController {
 
         // Prepare query
         String query = "";
+        int parameterCount = 0;
         switch (selectedTable) {
             case "matches":
                 query = "INSERT INTO matches (id, mdate, startsat, ticketprice, mtype) VALUES (?, ?, ?, ?, ?)";
+                parameterCount = 5;
                 break;
             case "spectators":
                 query = "INSERT INTO spectators  (id, sname, male, haspass) VALUES (?, ?, ?, ?)";
+                parameterCount = 4;
                 break;
             case "entries":
                 query = "INSERT INTO entries (spectatorid, matchid, timestamp) VALUES (?, ?, ?)";
+                parameterCount = 3;
                 break;
+            default:
+                System.out.println("Unsupported table.");
+                return;
         }
 
         // Execute query
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setString(1, value1);
-            stmt.setString(2, value2);
-            stmt.setString(3, value3);
-            stmt.setString(4, value4);
-            stmt.setString(5, value5);
+            if (parameterCount >= 1) stmt.setString(1, value1);
+            if (parameterCount >= 2) stmt.setString(2, value2);
+            if (parameterCount >= 3) stmt.setString(3, value3);
+            if (parameterCount >= 4) stmt.setString(4, value4);
+            if (parameterCount >= 5) stmt.setString(5, value5);
 
             int rowsAffected = stmt.executeUpdate();
             System.out.println(rowsAffected > 0 ? "Record added successfully." : "Failed to add record.");
