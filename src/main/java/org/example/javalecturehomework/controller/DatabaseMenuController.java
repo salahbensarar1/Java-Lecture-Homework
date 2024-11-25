@@ -24,6 +24,11 @@ public class DatabaseMenuController {
 
 
 //    @FXML private ComboBox<String> matchComboBox, spectatorComboBox;
+@FXML private Pane changeDataPane; // The pane for the Change Data form
+ @FXML private ComboBox<String> recordIdComboBox; // ComboBox to select record ID
+    @FXML private Label labelId;
+    @FXML private ComboBox<String> matchIdComboBox;
+    @FXML private ComboBox<String> spectatorIdComboBox;
     @FXML private Label formTitle, label1, label2, label3, label4, label5;
     @FXML private TextField field1, field2, field3, field4, field5;
     @FXML private Pane addDataPane;
@@ -310,12 +315,14 @@ public class DatabaseMenuController {
                 field3.setVisible(true);
                 field4.setVisible(true);
                 field5.setVisible(true);
+                matchIdComboBox.setVisible(false);
+                spectatorIdComboBox.setVisible(false);
                 break;
             case "spectators":
                 label1.setText("ID");
                 label2.setText("Name");
-                label3.setText("Sex");
-                label4.setText("has Pass");
+                label3.setText("Sex (1 -> Male OR 0 -> Female)");
+                label4.setText("has Pass 1 (1 -> YES OR 0 -> NO)");
                 label1.setVisible(true);
                 label2.setVisible(true);
                 label3.setVisible(true);
@@ -326,6 +333,8 @@ public class DatabaseMenuController {
                 field3.setVisible(true);
                 field4.setVisible(true);
                 field5.setVisible(false);
+                matchIdComboBox.setVisible(false);
+                spectatorIdComboBox.setVisible(false);
                 break;
             case "entries":
                 label1.setText("Match ID");
@@ -336,11 +345,15 @@ public class DatabaseMenuController {
                 label3.setVisible(true);
                 label4.setVisible(false);
                 label5.setVisible(false);
-                field1.setVisible(true);
-                field2.setVisible(true);
+                field1.setVisible(false);
+                field2.setVisible(false);
                 field3.setVisible(true);
                 field4.setVisible(false);
                 field5.setVisible(false);
+                matchIdComboBox.setVisible(true);
+                spectatorIdComboBox.setVisible(true);
+                loadComboBoxData();
+
                 break;
             default:
                 System.out.println("Unknown table selected.");
@@ -358,7 +371,33 @@ public class DatabaseMenuController {
         addDataPane.setVisible(true);
     }
 
+    private void loadComboBoxData() {
+        // Clear existing items
+        matchIdComboBox.getItems().clear();
+        spectatorIdComboBox.getItems().clear();
 
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            // Load match IDs
+            String matchQuery = "SELECT id FROM matches";
+            try (PreparedStatement matchStmt = conn.prepareStatement(matchQuery);
+                 ResultSet matchRs = matchStmt.executeQuery()) {
+                while (matchRs.next()) {
+                    matchIdComboBox.getItems().add(matchRs.getString("id"));
+                }
+            }
+
+            // Load spectator IDs
+            String spectatorQuery = "SELECT id FROM spectators";
+            try (PreparedStatement spectatorStmt = conn.prepareStatement(spectatorQuery);
+                 ResultSet spectatorRs = spectatorStmt.executeQuery()) {
+                while (spectatorRs.next()) {
+                    spectatorIdComboBox.getItems().add(spectatorRs.getString("id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
     @FXML
     private void submitAddData() {
@@ -392,6 +431,8 @@ public class DatabaseMenuController {
             case "entries":
                 query = "INSERT INTO entries (spectatorid, matchid, timestamp) VALUES (?, ?, ?)";
                 parameterCount = 3;
+                value1 = matchIdComboBox.getValue(); // Use selected match ID
+                value2 = spectatorIdComboBox.getValue(); // Use selected spectator I
                 break;
             default:
                 System.out.println("Unsupported table.");
@@ -431,12 +472,242 @@ public class DatabaseMenuController {
 
     @FXML
     public void handleChangeAction() {
-        System.out.println("Changing data...");
+        String selectedTable = tableComboBox.getValue();
+
+        if (selectedTable == null) {
+            System.out.println("Please select a table first.");
+            return;
+        }
+
+        formTitle.setText("Change Record in " + selectedTable);
+
+        // Set up form labels based on the selected table
+        switch (selectedTable) {
+            case "matches":
+                labelId.setText("Select Match ID");
+                label1.setText("Date");
+                label2.setText("Start Time");
+                label3.setText("Ticket Price");
+                label4.setText("Match Type");
+                label1.setVisible(true);
+                label2.setVisible(true);
+                label3.setVisible(true);
+                label4.setVisible(true);
+                label5.setVisible(false);
+                field1.setVisible(true);
+                field2.setVisible(true);
+                field3.setVisible(true);
+                field4.setVisible(true);
+                matchIdComboBox.setVisible(false);
+                spectatorIdComboBox.setVisible(false);
+                break;
+            case "spectators":
+                labelId.setText("Select Spectator ID");
+                label1.setText("Name");
+                label2.setText("Sex (1 -> Male OR 0 -> Female)");
+                label3.setText("has Pass 1 (1 -> YES OR 0 -> NO)");
+                label1.setVisible(true);
+                label2.setVisible(true);
+                label3.setVisible(true);
+                label4.setVisible(false);
+                label5.setVisible(false);
+                field1.setVisible(true);
+                field2.setVisible(true);
+                field3.setVisible(true);
+                field4.setVisible(false);
+                field5.setVisible(false);
+                matchIdComboBox.setVisible(false);
+                spectatorIdComboBox.setVisible(false);
+                break;
+            case "entries":
+                labelId.setText("Select Entry ID");
+                label1.setText("Match ID");
+                label2.setText("Spectator ID");
+                label3.setText("Time Stamp");
+                label1.setVisible(true);
+                labelId.setVisible(false);
+                recordIdComboBox.setVisible(false);
+                label2.setVisible(true);
+                label3.setVisible(true);
+                label4.setVisible(false);
+                label5.setVisible(false);
+                field1.setVisible(false);  // Hide text field for Match ID
+                field2.setVisible(false);  // Hide text field for Spectator ID
+                field3.setVisible(true);   // Show text field for Time Stamp
+                field4.setVisible(false);
+                field5.setVisible(false);
+                matchIdComboBox.setVisible(true);
+                spectatorIdComboBox.setVisible(true);
+
+                // Populate the ComboBoxes for Match and Spectator IDs
+                loadMatchIdComboBox();  // Load Match IDs into ComboBox
+                loadSpectatorIdComboBox();  // Load Spectator IDs into ComboBox
+                break;
+            default:
+                System.out.println("Unknown table selected.");
+                return;
+        }
+
+        // Load record IDs into the ComboBox
+        loadRecordIdComboBox(selectedTable);
+
+        // Show the form
+        changeDataPane.setVisible(true);
     }
+    private void loadMatchIdComboBox() {
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT id FROM matches")) {
+
+            while (resultSet.next()) {
+                matchIdComboBox.getItems().add(resultSet.getString("id"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error loading Match IDs: " + e.getMessage());
+        }
+    }
+
+    private void loadSpectatorIdComboBox() {
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT id FROM spectators")) {
+
+            while (resultSet.next()) {
+                spectatorIdComboBox.getItems().add(resultSet.getString("id"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error loading Spectator IDs: " + e.getMessage());
+        }
+    }
+
+    private void loadRecordIdComboBox(String tableName) {
+        ObservableList<String> recordIds = FXCollections.observableArrayList();
+        String query = "SELECT id FROM " + tableName;
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            while (resultSet.next()) {
+                recordIds.add(resultSet.getString("id"));
+            }
+
+            recordIdComboBox.setItems(recordIds);
+        } catch (SQLException e) {
+            System.out.println("Error loading record IDs: " + e.getMessage());
+        }
+    }
+
+
     @FXML
-    public void handleUpdateRecord(javafx.event.ActionEvent actionEvent) {
-        System.out.println("Updating data...");
+    private void loadRecordData() {
+        String selectedTable = tableComboBox.getValue();
+        String selectedId = recordIdComboBox.getValue();
+
+        if (selectedId == null) {
+            return;
+        }
+
+        String query = "SELECT * FROM " + selectedTable + " WHERE id = ?";
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            preparedStatement.setString(1, selectedId);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    field1.setText(resultSet.getString(2)); // Adjust based on column order
+                    field2.setText(resultSet.getString(3));
+                    field3.setText(resultSet.getString(4));
+                    field4.setText(resultSet.getString(5));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error loading record data: " + e.getMessage());
+        }
     }
+
+    @FXML
+    private void submitChangeData() {String selectedTable = tableComboBox.getValue();
+        String selectedId = recordIdComboBox.getValue(); // This is no longer used for entries table
+
+        if (selectedTable == null) {
+            System.out.println("Please select a table to update.");
+            return;
+        }
+
+        String query = "";
+        switch (selectedTable) {
+            case "matches":
+                query = "UPDATE matches SET mdate = ?, startsat = ?, ticketprice = ?, mtype = ? WHERE id = ?";
+                break;
+            case "spectators":
+                query = "UPDATE spectators SET sname = ?, male = ?, haspass = ? WHERE id = ?";
+                break;
+            case "entries":
+                // The query for entries table will use both spectatorid and matchid in the WHERE clause
+                query = "UPDATE entries SET spectatorid = ?, matchid = ?, timestamp = ? WHERE spectatorid = ? AND matchid = ?";
+                break;
+            default:
+                System.out.println("Unknown table selected.");
+                return;
+        }
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            // Set the parameters for the prepared statement
+            switch (selectedTable) {
+                case "matches":
+                    preparedStatement.setString(1, field1.getText());  // mdate
+                    preparedStatement.setString(2, field2.getText());  // startsat
+                    preparedStatement.setString(3, field3.getText());  // ticketprice
+                    preparedStatement.setString(4, field4.getText());  // mtype
+                    preparedStatement.setString(5, selectedId);  // match id (only for matches)
+                    break;
+                case "spectators":
+                    preparedStatement.setString(1, field1.getText());  // sname
+                    preparedStatement.setString(2, field2.getText());  // male
+                    preparedStatement.setString(3, field3.getText());  // haspass
+                    preparedStatement.setString(4, selectedId);  // spectator id (only for spectators)
+                    break;
+                case "entries":
+                    preparedStatement.setString(1, spectatorIdComboBox.getValue());  // spectatorid
+                    preparedStatement.setString(2, matchIdComboBox.getValue());  // matchid
+                    preparedStatement.setString(3, field3.getText());  // timestamp
+                    // Use the spectatorid and matchid from the ComboBoxes in the WHERE clause
+                    preparedStatement.setString(4, spectatorIdComboBox.getValue());  // spectatorid in WHERE clause
+                    preparedStatement.setString(5, matchIdComboBox.getValue());  // matchid in WHERE clause
+                    break;
+            }
+
+            // Execute the query
+            int rowsUpdated = preparedStatement.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("Record updated successfully.");
+            } else {
+                System.out.println("No record was updated.");
+            }
+
+            // Hide the form
+            changeDataPane.setVisible(false);
+        } catch (SQLException e) {
+            System.out.println("Error updating record: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void cancelChangeData() {
+        changeDataPane.setVisible(false);
+    }
+
+
+
+
+
+
     @FXML
     public void handleRowSelect(MouseEvent mouseEvent) {
         System.out.println("Row selected...");
