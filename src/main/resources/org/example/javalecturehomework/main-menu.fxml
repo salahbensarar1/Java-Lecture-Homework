@@ -91,6 +91,13 @@
             <MenuItem text="Download2" onAction="#downloadFilteredSoapData"/>
             <MenuItem text="Graph" onAction="#graphSoapData"/>
         </Menu>
+        <Menu text="Parallel">
+            <items>
+                <MenuItem text="Parallel Example" onAction="#parallelAction"/>
+            </items>
+        </Menu>
+
+
     </MenuBar>
 </AnchorPane>
 

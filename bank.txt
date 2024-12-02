@@ -1,0 +1,2 @@
+<MNBExchangeRates><Day date="2024-12-02"><Rate unit="1" curr="USD">393,86</Rate></Day></MNBExchangeRates>
+Metadata: Data generated with option Detailed Data

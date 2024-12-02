@@ -1,8 +1,10 @@
 package org.example.javalecturehomework.controller;
 
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -16,7 +18,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import org.example.javalecturehomework.model.Entry;
 import org.example.javalecturehomework.model.Match;
 import org.example.javalecturehomework.model.Spectator;
@@ -25,17 +26,12 @@ import org.example.javalecturehomework.service.MNBArfolyamServiceSoapImpl;
 import org.example.javalecturehomework.utils.DatabaseConnection;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.*;
 import java.sql.Date;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class DatabaseMenuController {
@@ -1232,6 +1228,78 @@ public class DatabaseMenuController {
             graphStage.setScene(scene);
             graphStage.show();
         }
+    }
+
+    public void parallelAction(ActionEvent actionEvent) {
+        // Create the UI components
+        Label labelOne = new Label("Label 1: Waiting...");
+        Label labelTwo = new Label("Label 2: Waiting...");
+        Button startButton = new Button("Start Parallel Tasks");
+
+        // Start parallel tasks on button click
+        startButton.setOnAction(e -> {
+            startParallelTask(labelOne, labelTwo);
+        });
+
+        // Layout for the new stage
+        VBox layout = new VBox(20);
+        layout.setPadding(new Insets(10));
+        layout.getChildren().addAll(labelOne, labelTwo, startButton);
+
+        // Create and show the stage
+        Stage parallelStage = new Stage();
+        parallelStage.setTitle("Parallel Programming Demo");
+        parallelStage.setScene(new Scene(layout, 300, 200));
+        parallelStage.show();
+    }
+
+    private void startParallelTask(Label labelOne, Label labelTwo) {
+        // Task 1: Updates Label 1 every 1 second
+        Task<Void> taskOne = new Task<>() {
+            @Override
+            protected Void call() {
+                int count = 0;
+                while (!isCancelled()) {
+                    try {
+                        Thread.sleep(1000); // Pause for 1 second
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                    int finalCount = count;
+                    Platform.runLater(() -> labelOne.setText("Label 1: Count " + finalCount));
+                    count++;
+                }
+                return null;
+            }
+        };
+
+        // Task 2: Updates Label 2 every 2 seconds
+        Task<Void> taskTwo = new Task<>() {
+            @Override
+            protected Void call() {
+                int count = 0;
+                while (!isCancelled()) {
+                    try {
+                        Thread.sleep(2000); // Pause for 2 seconds
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                    int finalCount = count;
+                    Platform.runLater(() -> labelTwo.setText("Label 2: Count " + finalCount));
+                    count++;
+                }
+                return null;
+            }
+        };
+
+        // Start both tasks in separate threads
+        Thread threadOne = new Thread(taskOne);
+        threadOne.setDaemon(true);
+        threadOne.start();
+
+        Thread threadTwo = new Thread(taskTwo);
+        threadTwo.setDaemon(true);
+        threadTwo.start();
     }
     //***************************************************************************************************************************************
     //***************************************************************************************************************************************  //***************************************************************************************************************************************
