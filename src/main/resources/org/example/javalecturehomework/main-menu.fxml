@@ -99,11 +99,11 @@
         <Menu text="Forex last">
             <items>
                 <MenuItem text="Account Information" onAction="#accountInformationAction"/>
-                <MenuItem text="Current Prices" onAction="#currentPricesAction"/>
+                <MenuItem text="Current Prices" onAction="#CurrentPriceDeci"/>
                 <MenuItem text="Historical Prices" onAction="#historicalPricesAction"/>
                 <MenuItem text="Position Opening" onAction="#positionOpeningAction"/>
-                <MenuItem text="Position Closing" onAction="#positionClosingAction"/>
-                <MenuItem text="Opened Positions" onAction="#openedPositionsAction"/>
+                <MenuItem text="Position Closing" onAction="#positionCloseAction"/>
+                <MenuItem text="Opened Positions" onAction="#openPositionsAction"/>
             </items>
         </Menu>
 
