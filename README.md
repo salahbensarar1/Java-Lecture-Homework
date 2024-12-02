@@ -92,7 +92,7 @@ Integrated with the **Oanda API** to manage Forex data and operations.
 
 ## 3. Technologies Used
 - **Frontend**: JavaFX
-- **Backend**: Java (JDK 20)
+- **Backend**: Java (JDK 17)
 - **Database**: sqlite
 - **SOAP Integration**: Hungarian National Bank API
 - **Forex API**: Oanda API
