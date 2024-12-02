@@ -10,7 +10,7 @@ import java.util.List;
 public class MatchesController {
     public List<Match> getAllMatches() {
         List<Match> matches = new ArrayList<>();
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = DatabaseConnection.connect()) {
             String query = "SELECT * FROM matches";
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(query);
@@ -31,7 +31,7 @@ public class MatchesController {
     }
 
     public boolean addMatch(Match match) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = DatabaseConnection.connect()) {
             String query = "INSERT INTO matches (id, mdate, startsat, ticketprice, mtype) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setInt(1, match.getId());
@@ -49,7 +49,7 @@ public class MatchesController {
     // Add updateMatch and deleteMatch methods here
     public boolean updateMatch(int id, String date, String startTime, double ticketPrice, String matchType) {
         String query = "UPDATE matches SET mdate = ?, startsat = ?, ticketprice = ?, mtype = ? WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DatabaseConnection.connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, date);       // Match date (String in YYYY-MM-DD format)
@@ -67,7 +67,7 @@ public class MatchesController {
 
     public boolean deleteMatch(int id) {
         String query = "DELETE FROM matches WHERE id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DatabaseConnection.connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, id); // Match ID to delete

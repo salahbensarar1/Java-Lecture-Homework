@@ -35,6 +35,8 @@ import org.example.javalecturehomework.service.MNBArfolyamServiceSoap;
 import org.example.javalecturehomework.service.MNBArfolyamServiceSoapImpl;
 import org.example.javalecturehomework.utils.DatabaseConnection;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -108,18 +110,28 @@ public class DatabaseMenuController {
     public void initialize() {
         // Initialize ComboBox with table names
         tableComboBox.getItems().addAll("matches", "entries", "spectators");
-        tableComboBox.setOnAction(event -> fetchData());
+
+        // Set action handler for ComboBox
         tableComboBox.setOnAction(event -> {
-            fetchData();
-            setupFilterOptions();
+            fetchData();          // Fetch data based on selected table
+            setupFilterOptions(); // Set up filter options
         });
-        // Initialize database connection
+
+        // Initialize database connection (SQLite)
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+            // SQLite connection string
+            String dbUrl = "jdbc:sqlite:identifier.sqlite";  // Update the path if necessary
+            connection = DriverManager.getConnection(dbUrl);
+
+            // Log the connection string for debugging
+            System.out.println("Database connected to: " + dbUrl);
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace();  // Log error if connection fails
         }
     }
+
+
     //***************************************************************************************************************************************
     private void setupFilterOptions() {
         String selectedTable = tableComboBox.getSelectionModel().getSelectedItem();
@@ -136,48 +148,85 @@ public class DatabaseMenuController {
         }
     }
 //***************************************************************************************************************************************
+private void fetchData() {
+    String selectedTable = tableComboBox.getSelectionModel().getSelectedItem();
+    if (selectedTable == null) return;
 
-    private void fetchData() {
-        String selectedTable = tableComboBox.getSelectionModel().getSelectedItem();
-        if (selectedTable == null) return;
+    ObservableList<Object> data = FXCollections.observableArrayList();
+    String query = buildQueryForTable(selectedTable);
 
-        ObservableList<Object> data = FXCollections.observableArrayList();
-        String query = buildQueryForTable(selectedTable);
+    try (Statement stmt = connection.createStatement();
+         ResultSet resultSet = stmt.executeQuery(query)) {
 
-        try (Statement stmt = connection.createStatement();
-             ResultSet resultSet = stmt.executeQuery(query)) {
+        while (resultSet.next()) {
+            if (selectedTable.equals("matches")) {
+                int id = resultSet.getInt("id");
 
-            while (resultSet.next()) {
-                if (selectedTable.equals("matches")) {
-                    int id = resultSet.getInt("id");
-                    Date mdate = resultSet.getDate("mdate");
-                    Time startsAt = resultSet.getTime("startsAt");
-                    double ticketPrice = resultSet.getDouble("ticketPrice");
-                    String mtype = resultSet.getString("mtype");
-
-                    Match match = new Match(id, mdate, startsAt, ticketPrice, mtype);
-                    data.add(match);
-                } else if (selectedTable.equals("entries")) {
-                    int spectatorId = resultSet.getInt("spectatorid");
-                    int matchId = resultSet.getInt("matchid");
-                    Time timestamp = resultSet.getTime("timestamp");
-
-                    data.add(new Entry(spectatorId, matchId, timestamp));
-                } else if (selectedTable.equals("spectators")) {
-                    int id = resultSet.getInt("id");
-                    String sname = resultSet.getString("sname");
-                    boolean male = resultSet.getBoolean("male");
-                    boolean hasPass = resultSet.getBoolean("haspass");
-
-                    data.add(new Spectator(id, sname, male, hasPass));
+                // Parse the 'mdate' date field
+                String mdateString = resultSet.getString("mdate");
+                Date mdate = null;
+                if (mdateString != null) {
+                    try {
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); // Date format in SQLite (YYYY-MM-DD)
+                        mdate = new Date(dateFormat.parse(mdateString).getTime());
+                    } catch (ParseException e) {
+                        e.printStackTrace();  // Handle parsing issues here
+                    }
                 }
-            }
 
-            updateTableView(selectedTable, data);
-        } catch (SQLException e) {
-            e.printStackTrace();
+                // Parse the 'startsAt' time field
+                String startsAtString = resultSet.getString("startsAt");
+                Time startsAt = null;
+                if (startsAtString != null) {
+                    try {
+                        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss"); // Time format
+                        startsAt = new Time(timeFormat.parse(startsAtString).getTime());
+                    } catch (ParseException e) {
+                        e.printStackTrace();  // Handle parsing issues here
+                    }
+                }
+
+                double ticketPrice = resultSet.getDouble("ticketPrice");
+                String mtype = resultSet.getString("mtype");
+
+                Match match = new Match(id, mdate, startsAt, ticketPrice, mtype);
+                data.add(match);
+            } else if (selectedTable.equals("entries")) {
+                int spectatorId = resultSet.getInt("spectatorid");
+                int matchId = resultSet.getInt("matchid");
+
+                // Parse the 'timestamp' time field
+                String timeString = resultSet.getString("timestamp");
+                Time timestamp = null;
+                if (timeString != null) {
+                    try {
+                        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss"); // Time format
+                        timestamp = new Time(timeFormat.parse(timeString).getTime());
+                    } catch (ParseException e) {
+                        e.printStackTrace();  // Handle parsing issues here
+                    }
+                }
+
+                data.add(new Entry(spectatorId, matchId, timestamp));
+            } else if (selectedTable.equals("spectators")) {
+                int id = resultSet.getInt("id");
+                String sname = resultSet.getString("sname");
+                boolean male = resultSet.getBoolean("male");
+                boolean hasPass = resultSet.getBoolean("haspass");
+
+                data.add(new Spectator(id, sname, male, hasPass));
+            }
         }
+
+        updateTableView(selectedTable, data);
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+}
+
+
+
+
     //***************************************************************************************************************************************
     private void updateTableView(String selectedTable, ObservableList<Object> data) {
         // Clear previous columns
@@ -300,6 +349,7 @@ public class DatabaseMenuController {
 
         ObservableList<Object> data = FXCollections.observableArrayList();
 
+        // Construct the query with the filters
         String query = buildFilteredQuery(selectedTable, selectedColumn, filterValue, includeSpecialItems, filterOptionEnabled);
 
         try (Statement stmt = connection.createStatement();
@@ -308,7 +358,9 @@ public class DatabaseMenuController {
             while (resultSet.next()) {
                 if (selectedTable.equals("matches")) {
                     int id = resultSet.getInt("id");
-                    Date mdate = resultSet.getDate("mdate");
+                    // SQLite stores dates as text or integer, so we handle it accordingly
+                    String mdateString = resultSet.getString("mdate");  // SQLite stores date as string
+                    Date mdate = Date.valueOf(mdateString);  // Converting string to Date
                     Time startsAt = resultSet.getTime("startsAt");
                     double ticketPrice = resultSet.getDouble("ticketPrice");
                     String mtype = resultSet.getString("mtype");
@@ -336,6 +388,7 @@ public class DatabaseMenuController {
             e.printStackTrace();
         }
     }
+
 //***************************************************************************************************************************************
 
 
@@ -425,19 +478,19 @@ public class DatabaseMenuController {
         addDataPane.setVisible(true);
     }
 
-
     private void loadComboBoxData() {
         // Clear existing items
         matchIdComboBox.getItems().clear();
         spectatorIdComboBox.getItems().clear();
 
-        try (Connection conn = DatabaseConnection.getConnection()) {
+        try (Connection conn = DatabaseConnection.connect()) {
             // Load match IDs
             String matchQuery = "SELECT id FROM matches";
             try (PreparedStatement matchStmt = conn.prepareStatement(matchQuery);
                  ResultSet matchRs = matchStmt.executeQuery()) {
                 while (matchRs.next()) {
-                    matchIdComboBox.getItems().add(matchRs.getString("id"));
+                    // Add match IDs to the combo box
+                    matchIdComboBox.getItems().add(String.valueOf(matchRs.getInt("id"))); // Use Integer for better type consistency
                 }
             }
 
@@ -446,21 +499,22 @@ public class DatabaseMenuController {
             try (PreparedStatement spectatorStmt = conn.prepareStatement(spectatorQuery);
                  ResultSet spectatorRs = spectatorStmt.executeQuery()) {
                 while (spectatorRs.next()) {
-                    spectatorIdComboBox.getItems().add(spectatorRs.getString("id"));
+                    // Add spectator IDs to the combo box
+                    spectatorIdComboBox.getItems().add(String.valueOf(spectatorRs.getInt("id"))); // Use Integer for better type consistency
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            // Consider showing an error dialog to the user
         }
     }
-
     @FXML
     private void submitAddData() {
         String selectedTable = tableComboBox.getValue();
 
         // Validate selection and input
         if (selectedTable == null) {
-            System.out.println("No table selected.");
+            showAlert("Error", "No table selected.");
             return;
         }
 
@@ -471,6 +525,12 @@ public class DatabaseMenuController {
         String value4 = Addfield4.getText();
         String value5 = Addfield5.getText();
 
+        // Validate data (additional checks can be added)
+        if (value1.isEmpty() || value2.isEmpty()) {
+            showAlert("Error", "Required fields are missing.");
+            return;
+        }
+
         // Prepare query
         String query = "";
         int parameterCount = 0;
@@ -480,23 +540,28 @@ public class DatabaseMenuController {
                 parameterCount = 5;
                 break;
             case "spectators":
-                query = "INSERT INTO spectators  (id, sname, male, haspass) VALUES (?, ?, ?, ?)";
+                query = "INSERT INTO spectators (id, sname, male, haspass) VALUES (?, ?, ?, ?)";
                 parameterCount = 4;
                 break;
             case "entries":
                 query = "INSERT INTO entries (spectatorid, matchid, timestamp) VALUES (?, ?, ?)";
                 parameterCount = 3;
                 value1 = matchIdComboBox.getValue(); // Use selected match ID
-                value2 = spectatorIdComboBox.getValue(); // Use selected spectator I
+                value2 = spectatorIdComboBox.getValue(); // Use selected spectator ID
+                if (value1 == null || value2 == null) {
+                    showAlert("Error", "Match ID or Spectator ID is missing.");
+                    return;
+                }
                 break;
             default:
-                System.out.println("Unsupported table.");
+                showAlert("Error", "Unsupported table.");
                 return;
         }
 
         // Execute query
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DatabaseConnection.connect();
              PreparedStatement stmt = conn.prepareStatement(query)) {
+            // Set parameters based on parameterCount
             if (parameterCount >= 1) stmt.setString(1, value1);
             if (parameterCount >= 2) stmt.setString(2, value2);
             if (parameterCount >= 3) stmt.setString(3, value3);
@@ -504,14 +569,21 @@ public class DatabaseMenuController {
             if (parameterCount >= 5) stmt.setString(5, value5);
 
             int rowsAffected = stmt.executeUpdate();
-            System.out.println(rowsAffected > 0 ? "Record added successfully." : "Failed to add record.");
+            if (rowsAffected > 0) {
+                showAlert("Success", "Record added successfully.");
+            } else {
+                showAlert("Failure", "Failed to add record.");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
+            showAlert("Error", "Database error occurred.");
         }
 
         // Hide the form
         addDataPane.setVisible(false);
     }
+
+
 
 
     @FXML
@@ -696,7 +768,7 @@ public class DatabaseMenuController {
         changeDataPane.setVisible(true);
     }
     private void loadMatchIdComboBox() {
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:identifier.sqlite");
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery("SELECT id FROM matches")) {
 
@@ -709,7 +781,7 @@ public class DatabaseMenuController {
     }
 
     private void loadSpectatorIdComboBox() {
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:identifier.sqlite");
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery("SELECT id FROM spectators")) {
 
@@ -725,7 +797,7 @@ public class DatabaseMenuController {
         ObservableList<String> recordIds = FXCollections.observableArrayList();
         String query = "SELECT id FROM " + tableName;
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:identifier.sqlite");
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
 
@@ -751,7 +823,7 @@ public class DatabaseMenuController {
 
         String query = "SELECT * FROM " + selectedTable + " WHERE id = ?";
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:identifier.sqlite");
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             preparedStatement.setString(1, selectedId);
@@ -795,7 +867,7 @@ public class DatabaseMenuController {
                 return;
         }
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:identifier.sqlite");
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             // Set the parameters for the prepared statement
@@ -886,7 +958,7 @@ public class DatabaseMenuController {
         // Define the query to fetch IDs for the selected table
         String query = "SELECT id FROM " + selectedTable;
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:identifier.sqlite");
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query)) {
 
@@ -917,7 +989,7 @@ public class DatabaseMenuController {
         // Define the DELETE query
         String query = "DELETE FROM " + selectedTable + " WHERE id = ?";
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:identifier.sqlite");
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             // Set the ID parameter
@@ -981,7 +1053,7 @@ public class DatabaseMenuController {
         // Define the DELETE query
         String query = "DELETE FROM " + selectedTable + " WHERE id = ?";
 
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:identifier.sqlite");
              PreparedStatement preparedStatement = connection.prepareStatement(query)) {
 
             // Set the ID parameter
