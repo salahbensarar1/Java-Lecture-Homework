@@ -1,5 +1,13 @@
 package org.example.javalecturehomework.controller;
 
+import com.oanda.v20.Context;
+import com.oanda.v20.account.AccountID;
+import com.oanda.v20.account.AccountSummary;
+import com.oanda.v20.pricing.ClientPrice;
+import com.oanda.v20.pricing.PricingGetRequest;
+import com.oanda.v20.trade.TradeCloseRequest;
+import com.oanda.v20.trade.TradeCloseResponse;
+import com.oanda.v20.trade.TradeSpecifier;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -8,19 +16,21 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.example.javalecturehomework.model.Entry;
-import org.example.javalecturehomework.model.Match;
-import org.example.javalecturehomework.model.Spectator;
+import org.example.javalecturehomework.Config;
+import org.example.javalecturehomework.model.*;
 import org.example.javalecturehomework.service.MNBArfolyamServiceSoap;
 import org.example.javalecturehomework.service.MNBArfolyamServiceSoapImpl;
 import org.example.javalecturehomework.utils.DatabaseConnection;
@@ -34,6 +44,7 @@ import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
+import com.oanda.v20.pricing.PricingGetResponse;
 public class DatabaseMenuController {
 
 //***************************************************************************************************************************************
@@ -42,6 +53,18 @@ public class DatabaseMenuController {
     @FXML private Pane graphFormPane;
     @FXML private ComboBox<String> graphDataComboBox;
     @FXML private Pane download2FormPane;
+
+    @FXML
+    private TableView<MarketPosition> positionTableView;
+    @FXML
+    private TableColumn<MarketPosition, String> currencyColumn;
+    @FXML
+    private TableColumn<MarketPosition, Integer> quantityColumn;
+    @FXML
+    private TableColumn<MarketPosition, String> statusColumn;
+
+
+    private Context ctx = new Context(Config.URL, Config.TOKEN);
 //***************************************************************************************************************************************
 
     @FXML private Button finalDeleteButton;
@@ -1013,22 +1036,22 @@ public class DatabaseMenuController {
         Stage downloadStage = new Stage();
         downloadStage.setTitle("Download SOAP Data");
 
-        // Create input fields
+
         Label startDateLabel = new Label("Start Date:");
-        DatePicker startDatePicker = new DatePicker(); // Use DatePicker for start date
+        DatePicker startDatePicker = new DatePicker();
 
         Label endDateLabel = new Label("End Date:");
-        DatePicker endDatePicker = new DatePicker(); // Use DatePicker for end date
+        DatePicker endDatePicker = new DatePicker();
 
         Label currencyLabel = new Label("Currency:");
         ComboBox<String> currencyComboBox = new ComboBox<>();
-        currencyComboBox.getItems().addAll("USD", "EUR", "HUF"); // Available currencies
+        currencyComboBox.getItems().addAll("USD", "EUR", "HUF");
 
-        // Create a ProgressBar
+
         ProgressBar progressBar = new ProgressBar(0);
         progressBar.setPrefWidth(200);
 
-        // Create a button to start the download
+
         Button downloadButton = new Button("Download Data");
         downloadButton.setOnAction(e -> {
             LocalDate startDate = startDatePicker.getValue();
@@ -1040,13 +1063,13 @@ public class DatabaseMenuController {
                 return;
             }
 
-            // Validate that the start date is not after the end date
+
             if (startDate.isAfter(endDate)) {
-                showAlert("Error", "Start date cannot be after the end date.");
+                showAlert("Error -_-", "Start date cannot be after the end date.");
                 return;
             }
 
-            // Start the download in a new thread to update the ProgressBar
+
             Thread downloadThread = new Thread(() -> {
                 try {
                     // Simulate progress updates
@@ -1055,19 +1078,19 @@ public class DatabaseMenuController {
                         Thread.sleep(10); // Simulate progress delay
                         final int currentProgress = i;
 
-                        // Update ProgressBar in the JavaFX Application Thread
+
                         javafx.application.Platform.runLater(() -> progressBar.setProgress(progress));
                     }
 
-                    // Perform the actual download
+
                     String exchangeRates = downloadSoapData(startDate.toString(), endDate.toString(), selectedCurrency);
 
-                    // Save the data to a file
+
                     saveDataToFile(exchangeRates);
 
-                    // Show success alert (must run on JavaFX Application Thread)
+
                     javafx.application.Platform.runLater(() ->
-                            showAlert("Download Successful", "All data has been downloaded to bank.txt.")
+                            showAlert("Download Successful", "All data has been downloaded to the file bank.txt.")
                     );
 
                 } catch (Exception ex) {
@@ -1080,7 +1103,7 @@ public class DatabaseMenuController {
             downloadThread.start();
         });
 
-        // Add components to the new window
+
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(10));
         vbox.getChildren().addAll(
@@ -1090,14 +1113,14 @@ public class DatabaseMenuController {
                 progressBar, downloadButton
         );
 
-        // Configure the scene and show the new window
+
         Scene scene = new Scene(vbox, 300, 350);
         downloadStage.setScene(scene);
         downloadStage.show();
     }
 
     public void downloadFilteredSoapData(javafx.event.ActionEvent actionEvent){
-        // Create a new stage for the form
+
         Stage filterStage = new Stage();
         filterStage.setTitle("Download Filtered SOAP Data");
 
@@ -1117,17 +1140,17 @@ public class DatabaseMenuController {
         RadioButton detailedDataRadio = new RadioButton("Detailed Data");
         RadioButton summaryDataRadio = new RadioButton("Summary Data");
 
-        // Group radio buttons
+
         ToggleGroup dataOptionsGroup = new ToggleGroup();
         detailedDataRadio.setToggleGroup(dataOptionsGroup);
         summaryDataRadio.setToggleGroup(dataOptionsGroup);
 
-        // Add a ProgressBar
+
         ProgressBar progressBar = new ProgressBar(0);
         progressBar.setPrefWidth(300);
-        progressBar.setVisible(false); // Hidden initially
+        progressBar.setVisible(false);
 
-        // Create download button
+
         Button downloadButton = new Button("Download Data");
         downloadButton.setOnAction(e -> {
             LocalDate startDate = startDatePicker.getValue();
@@ -1148,7 +1171,7 @@ public class DatabaseMenuController {
 
             String dataOption = selectedDataOption.getText();
 
-            // Start the SOAP data download
+
             progressBar.setVisible(true);
             downloadFilteredData(startDate.toString(), endDate.toString(), selectedCurrency, includeMetaData, dataOption, progressBar);
         });
@@ -1172,11 +1195,11 @@ public class DatabaseMenuController {
 
     public void graphSoapData(ActionEvent actionEvent) {
         {
-            // Create a new window for the graph form
+
             Stage graphStage = new Stage();
             graphStage.setTitle("Graph SOAP Data");
 
-            // Input fields and controls
+
             Label startDateLabel = new Label("Start Date:");
             DatePicker startDatePicker = new DatePicker();
 
@@ -1191,7 +1214,7 @@ public class DatabaseMenuController {
 
             Button generateGraphButton = new Button("Generate Graph");
 
-            // Graph container
+
             VBox graphContainer = new VBox(10);
 
             generateGraphButton.setOnAction(e -> {
@@ -1200,19 +1223,19 @@ public class DatabaseMenuController {
                 String selectedCurrency = currencyComboBox.getValue();
 
                 if (startDate.isEmpty() || endDate.isEmpty() || selectedCurrency == null) {
-                    showAlert("Error", "Please fill in all fields.");
+                    showAlert("Error -_-", "Please fill in all fields");
                     return;
                 }
 
-                // Clear previous graph, if any
+
                 graphContainer.getChildren().clear();
 
-                // Generate a new graph
+
                 LineChart<String, Number> lineChart = generateGraph(startDate, endDate, selectedCurrency, includeMetaDataCheckBox.isSelected());
                 graphContainer.getChildren().add(lineChart);
             });
 
-            // Layout setup
+
             VBox vbox = new VBox(10);
             vbox.setPadding(new javafx.geometry.Insets(10));
             vbox.getChildren().addAll(
@@ -1231,22 +1254,22 @@ public class DatabaseMenuController {
     }
 
     public void parallelAction(ActionEvent actionEvent) {
-        // Create the UI components
-        Label labelOne = new Label("Label 1: Waiting...");
-        Label labelTwo = new Label("Label 2: Waiting...");
-        Button startButton = new Button("Start Parallel Tasks");
 
-        // Start parallel tasks on button click
+        Label labelOne = new Label("Label 1 : Waiting... ");
+        Label labelTwo = new Label("Label 2 : Waiting... ");
+        Button startButton = new Button("Start the parallel tasks");
+
+
         startButton.setOnAction(e -> {
             startParallelTask(labelOne, labelTwo);
         });
 
-        // Layout for the new stage
+
         VBox layout = new VBox(20);
         layout.setPadding(new Insets(10));
         layout.getChildren().addAll(labelOne, labelTwo, startButton);
 
-        // Create and show the stage
+
         Stage parallelStage = new Stage();
         parallelStage.setTitle("Parallel Programming Demo");
         parallelStage.setScene(new Scene(layout, 300, 200));
@@ -1254,14 +1277,14 @@ public class DatabaseMenuController {
     }
 
     private void startParallelTask(Label labelOne, Label labelTwo) {
-        // Task 1: Updates Label 1 every 1 second
+
         Task<Void> taskOne = new Task<>() {
             @Override
             protected Void call() {
                 int count = 0;
                 while (!isCancelled()) {
                     try {
-                        Thread.sleep(1000); // Pause for 1 second
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -1273,14 +1296,13 @@ public class DatabaseMenuController {
             }
         };
 
-        // Task 2: Updates Label 2 every 2 seconds
         Task<Void> taskTwo = new Task<>() {
             @Override
             protected Void call() {
                 int count = 0;
                 while (!isCancelled()) {
                     try {
-                        Thread.sleep(2000); // Pause for 2 seconds
+                        Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         break;
                     }
@@ -1292,7 +1314,7 @@ public class DatabaseMenuController {
             }
         };
 
-        // Start both tasks in separate threads
+
         Thread threadOne = new Thread(taskOne);
         threadOne.setDaemon(true);
         threadOne.start();
@@ -1303,22 +1325,479 @@ public class DatabaseMenuController {
     }
 
     public void accountInformationAction(ActionEvent actionEvent) {
+        Context ctx = new Context("https://api-fxpractice.oanda.com", Config.TOKEN);
+
+
+        Stage progressStage = new Stage();
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        Label progressLabel = new Label("Loading account information...");
+        GridPane progressPane = new GridPane();
+        progressPane.setHgap(10);
+        progressPane.setVgap(10);
+        progressPane.add(progressIndicator, 0, 0);
+        progressPane.add(progressLabel, 0, 1);
+        Scene progressScene = new Scene(progressPane, 300, 200);
+        progressStage.setScene(progressScene);
+        progressStage.setTitle("Please Wait");
+        progressStage.show();
+
+
+        Task<AccountSummary> task = new Task<>() {
+            @Override
+            protected AccountSummary call() throws Exception {
+
+                return ctx.account.summary(new AccountID(Config.ACCOUNTID)).getAccount();
+            }
+        };
+
+        task.setOnSucceeded(workerStateEvent -> {
+            progressStage.close();
+            AccountSummary summary = task.getValue();
+
+
+            Stage infoStage = new Stage();
+            GridPane infoPane = new GridPane();
+            infoPane.setHgap(10);
+            infoPane.setVgap(10);
+
+            infoPane.add(new Label("Account ID:"), 0, 0);
+            infoPane.add(new Label(summary.getId().toString()), 1, 0);
+
+            infoPane.add(new Label("Alias:"), 0, 1);
+            infoPane.add(new Label(summary.getAlias()), 1, 1);
+
+            infoPane.add(new Label("Currency:"), 0, 2);
+            infoPane.add(new Label(summary.getCurrency().toString()), 1, 2);
+
+            infoPane.add(new Label("Balance:"), 0, 3);
+            infoPane.add(new Label(summary.getBalance().toString()), 1, 3);
+
+            infoPane.add(new Label("NAV:"), 0, 4);
+            infoPane.add(new Label(summary.getNAV().toString()), 1, 4);
+
+            infoPane.add(new Label("Unrealized P/L:"), 0, 5);
+            infoPane.add(new Label(summary.getUnrealizedPL().toString()), 1, 5);
+
+            infoPane.add(new Label("Margin Rate:"), 0, 6);
+            infoPane.add(new Label(summary.getMarginRate().toString()), 1, 6);
+
+            infoPane.add(new Label("Open Trades:"), 0, 7);
+            infoPane.add(new Label(String.valueOf(summary.getOpenTradeCount())), 1, 7);
+
+
+            Scene infoScene = new Scene(infoPane, 400, 300);
+            infoStage.setScene(infoScene);
+            infoStage.setTitle("Account Information");
+            infoStage.show();
+        });
+
+
+        task.setOnFailed(workerStateEvent -> {
+            progressStage.close();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Failed to Load Account Information");
+            alert.setContentText(task.getException().getMessage());
+            alert.showAndWait();
+        });
+
+
+        new Thread(task).start();
     }
 
-    public void currentPricesAction(ActionEvent actionEvent) {
+    public void CurrentPriceDeci(ActionEvent actionEvent) {
+        Stage priceStage = new Stage();
+        priceStage.setTitle("Current prices");
+
+
+        VBox mainLayout = new VBox(15);
+        mainLayout.setAlignment(Pos.CENTER);
+        mainLayout.setPadding(new Insets(20));
+
+        Label titleLabel = new Label("Check Current Prices");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+
+        ComboBox<String> currencyPairDropdown = new ComboBox<>();
+        currencyPairDropdown.getItems().addAll("EUR/USD", "USD/JPY", "GBP/USD", "AUD/USD", "USD/CHF");
+        currencyPairDropdown.setPromptText("Please Select a currency pair.");
+        currencyPairDropdown.setPrefWidth(200);
+
+
+        Button fetchPriceButton = new Button("Get Current Price");
+        fetchPriceButton.setStyle("-fx-font-size: 14px; -fx-padding: 8px 16px;");
+
+
+        Label priceLabel = new Label();
+        priceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333; -fx-alignment: center;");
+
+
+        ProgressIndicator loadingIndicator = new ProgressIndicator();
+        loadingIndicator.setVisible(false);
+
+
+        mainLayout.getChildren().addAll(titleLabel, currencyPairDropdown, fetchPriceButton, loadingIndicator, priceLabel);
+
+
+        Scene scene = new Scene(mainLayout, 400, 300);
+        priceStage.setScene(scene);
+        priceStage.show();
+
+
+        fetchPriceButton.setOnAction(e -> {
+            String selectedPair = currencyPairDropdown.getValue();
+
+            if (selectedPair == null) {
+                priceLabel.setText("Please select a currency pair.");
+                return;
+            }
+
+
+            loadingIndicator.setVisible(true);
+            priceLabel.setText("");
+
+
+            Context ctx = new Context("https://api-fxpractice.oanda.com", Config.TOKEN);
+
+            try {
+
+                PricingGetRequest request = new PricingGetRequest(
+                        new com.oanda.v20.account.AccountID(Config.ACCOUNTID),
+                        List.of(selectedPair.replace("/", "_"))
+                );
+
+
+                PricingGetResponse pricingResponse = ctx.pricing.get(request);
+
+
+                ClientPrice clientPrice = pricingResponse.getPrices().get(0);
+                String bidVal = clientPrice.getBids().get(0).getPrice().toString();
+                String askVal = clientPrice.getAsks().get(0).getPrice().toString();
+
+                priceLabel.setText(String.format("Bid: %s | Ask: %s", bidVal, askVal));
+
+
+
+                priceLabel.setText(String.format("Bid: %s | Ask: %s", bidVal, askVal));
+            } catch (Exception ex) {
+                priceLabel.setText("Failed to load the prices -_-.");
+                ex.printStackTrace();
+            } finally {
+
+                loadingIndicator.setVisible(false);
+            }
+        });
     }
 
     public void historicalPricesAction(ActionEvent actionEvent) {
+        Stage historicalStage = new Stage();
+        historicalStage.setTitle("Historical Prices");
+
+
+
+        VBox mainLayout = new VBox(15);
+        mainLayout.setAlignment(Pos.CENTER);
+        mainLayout.setPadding(new Insets(20));
+
+
+        Label titleLabel = new Label("Historical Prices");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+
+        ComboBox<String> currencyPairDropdown = new ComboBox<>();
+        currencyPairDropdown.getItems().addAll("EUR/USD", "USD/JPY", "GBP/USD", "AUD/USD", "USD/CHF");
+        currencyPairDropdown.setPromptText("Select a currency pair");
+        currencyPairDropdown.setPrefWidth(200);
+
+
+        DatePicker startDatePicker = new DatePicker();
+        startDatePicker.setPromptText("Start Date");
+
+        DatePicker endDatePicker = new DatePicker();
+        endDatePicker.setPromptText("End Date");
+
+
+        Button displayPriceButton = new Button("Get Historical Prices");
+        displayPriceButton.setStyle("-fx-font-size: 14px; -fx-padding: 8px 16px;");
+
+
+        TableView<PriceData> priceTable = new TableView<>();
+        TableColumn<PriceData, String> dateColumn = new TableColumn<>("Date");
+        dateColumn.setCellValueFactory(cellData -> cellData.getValue().dateProperty());
+        TableColumn<PriceData, String> bidColumn = new TableColumn<>("Bid");
+        bidColumn.setCellValueFactory(cellData -> cellData.getValue().bidProperty());
+        TableColumn<PriceData, String> askColumn = new TableColumn<>("Ask");
+        askColumn.setCellValueFactory(cellData -> cellData.getValue().askProperty());
+
+        priceTable.getColumns().addAll(dateColumn, bidColumn, askColumn);
+
+
+        mainLayout.getChildren().addAll(titleLabel, currencyPairDropdown, startDatePicker, endDatePicker, displayPriceButton, priceTable);
+
+
+        Scene scene = new Scene(mainLayout, 600, 400);
+        historicalStage.setScene(scene);
+        historicalStage.show();
+
+
+        displayPriceButton.setOnAction(e -> {
+            String selectedPair = currencyPairDropdown.getValue();
+            LocalDate startDate = startDatePicker.getValue();
+            LocalDate endDate = endDatePicker.getValue();
+
+            if (selectedPair == null || startDate == null || endDate == null) {
+
+                Error("Please select a currency pair and dates.");
+                return;
+            }
+
+
+            Context ctx = new Context("https://api-fxpractice.oanda.com", Config.TOKEN);
+
+            try {
+
+                PricingGetRequest request = new PricingGetRequest(
+                        new AccountID(Config.ACCOUNTID),
+                        List.of(selectedPair.replace("/", "_"))
+                );
+
+
+                PricingGetResponse pricingResponse = ctx.pricing.get(request);
+
+
+                List<PriceData> historicalPrices = new ArrayList<>();
+                for (ClientPrice clientPrice : pricingResponse.getPrices()) {
+                    // Assuming the historical data is available in the ClientPrice object
+                    String bid = clientPrice.getBids().get(0).getPrice().toString();
+                    String ask = clientPrice.getAsks().get(0).getPrice().toString();
+                    // Populate the list with the historical data
+                    historicalPrices.add(new PriceData(clientPrice.getTime().toString(), bid, ask));
+                }
+
+
+                priceTable.getItems().setAll(historicalPrices);
+            } catch (Exception ex) {
+                Error("Failed to fetch historical prices.");
+                ex.printStackTrace();
+            }
+        });
+    }
+    private void Error(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }    public void positionOpeningAction(ActionEvent actionEvent) {
+
+        Stage positionStage = new Stage();
+        positionStage.setTitle("Open Position");
+
+
+        VBox mainLayout = new VBox(15);
+        mainLayout.setAlignment(Pos.CENTER);
+        mainLayout.setPadding(new Insets(20));
+
+
+        Label titleLabel = new Label("Open a Position");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+
+        ComboBox<String> currencyPairDropdown = new ComboBox<>();
+        currencyPairDropdown.getItems().addAll("EUR/USD", "USD/JPY", "GBP/USD", "AUD/USD", "USD/CHF");
+        currencyPairDropdown.setPromptText("Please Select a currency pair ");
+        currencyPairDropdown.setPrefWidth(200);
+
+
+        TextField quantityField = new TextField();
+        quantityField.setPromptText("Enter quantity");
+        quantityField.setPrefWidth(200);
+
+
+        ComboBox<String> directionDropdown = new ComboBox<>();
+        directionDropdown.getItems().addAll(" Buy ", " Sell ");
+        directionDropdown.setPromptText("Select direction to do");
+        directionDropdown.setPrefWidth(200);
+
+
+        Button openPositionButton = new Button("Open Position");
+        openPositionButton.setStyle("-fx-font-size: 14px; -fx-padding: 8px 16px;");
+
+
+        Label resultLabel = new Label();
+        resultLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333; -fx-alignment: center;");
+
+
+        mainLayout.getChildren().addAll(titleLabel, currencyPairDropdown, quantityField, directionDropdown, openPositionButton, resultLabel);
+
+
+        Scene scene = new Scene(mainLayout, 400, 300);
+        positionStage.setScene(scene);
+        positionStage.show();
+
+
+        openPositionButton.setOnAction(e -> {
+            String selectedCurrPair = currencyPairDropdown.getValue();
+            String quantityText = quantityField.getText();
+            String direction = directionDropdown.getValue();
+
+
+            if (selectedCurrPair == null || quantityText.isEmpty() || direction == null) {
+                resultLabel.setText("Please fill in all fields.");
+                return;
+            }
+
+
+            double quantity;
+            try {
+                quantity = Double.parseDouble(quantityText);
+            } catch (NumberFormatException ex) {
+                resultLabel.setText("Invalid quantity.");
+                return;
+            }
+
+            try {
+
+                String action = (direction.equals("Buy")) ? "Buying" : "Selling";
+                resultLabel.setText(String.format("Opening %s position for %s with quantity %.3f", action, selectedCurrPair, quantity));
+
+
+
+            } catch (Exception ex) {
+                resultLabel.setText("Failed to open position.");
+                ex.printStackTrace();
+            }
+        });
     }
 
-    public void positionClosingAction(ActionEvent actionEvent) {
+
+
+    public void positionCloseAction(ActionEvent actionEvent) {
+
+        Stage closingStage = new Stage();
+        closingStage.setTitle("Close Position");
+
+
+        VBox mainLayout = new VBox(15);
+        mainLayout.setAlignment(Pos.CENTER);
+        mainLayout.setPadding(new Insets(20));
+
+        Label titleLabel = new Label("Close Position");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+
+        Label positionIdLabel = new Label("Enter Position ID:");
+
+
+        TextField positionIdField = new TextField();
+        positionIdField.setPromptText("Position ID");
+
+
+        Button closePositionButton = new Button("Close Position");
+        closePositionButton.setStyle("-fx-font-size: 14px; -fx-padding: 8px 16px;");
+
+
+        Label resultLabel = new Label();
+        resultLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333; -fx-alignment: center;");
+
+
+        mainLayout.getChildren().addAll(titleLabel, positionIdLabel, positionIdField, closePositionButton, resultLabel);
+
+
+        Scene scene = new Scene(mainLayout, 400, 300);
+        closingStage.setScene(scene);
+        closingStage.show();
+
+
+        closePositionButton.setOnAction(e -> {
+            String positionId = positionIdField.getText().trim();
+
+            if (positionId.isEmpty()) {
+                resultLabel.setText("Please enter a position ID.");
+                return;
+            }
+
+
+
+
+            Context ctx = new Context("https://api-fxpractice.oanda.com", Config.TOKEN);
+
+            try {
+
+                TradeSpecifier tradeSpecifier = new TradeSpecifier(positionId);
+
+
+                TradeCloseRequest closeRequest = new TradeCloseRequest(Config.ACCOUNTID, tradeSpecifier);
+
+
+                TradeCloseResponse closeResponse = ctx.trade.close(closeRequest);
+
+
+                if (closeResponse != null) {
+                    resultLabel.setText("Position closed successfully!");
+                } else {
+                    resultLabel.setText("Failed to close position.");
+                }
+            } catch (Exception ex) {
+                resultLabel.setText("Error: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
     }
 
-    public void positionOpeningAction(ActionEvent actionEvent) {
+
+    public void openPositionsAction(ActionEvent actionEvent) {
+
+        Stage openedPositionsStage = new Stage();
+        openedPositionsStage.setTitle("Opened Positions");
+
+
+        VBox mainLayout = new VBox(15);
+        mainLayout.setAlignment(Pos.CENTER);
+        mainLayout.setPadding(new Insets(20));
+
+
+        Label titleLabel = new Label("Opened Positions");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+
+        TableView<org.example.javalecturehomework.model.Position> positionsTable = new TableView<>();
+        positionsTable.setPrefWidth(400);
+
+
+        TableColumn<Position, String> currencyPairColumn = new TableColumn<>("Currency Pair");
+        currencyPairColumn.setCellValueFactory(new PropertyValueFactory<>("currencyPair"));
+
+        TableColumn<Position, String> directionColumn = new TableColumn<>("Direction");
+        directionColumn.setCellValueFactory(new PropertyValueFactory<>("direction"));
+
+        TableColumn<Position, Double> quantityColumn = new TableColumn<>("Quantity");
+        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+
+        positionsTable.getColumns().addAll(currencyPairColumn, directionColumn, quantityColumn);
+
+
+        ObservableList<Position> openedPositions = FXCollections.observableArrayList(
+                new Position("EUR/USD", "Buy", 1000),
+                new Position("GBP/USD", "Sell", 1500),
+                new Position("USD/JPY", "Buy", 2000)
+        );
+
+
+        positionsTable.setItems(openedPositions);
+
+
+        mainLayout.getChildren().addAll(titleLabel, positionsTable);
+
+
+        Scene scene = new Scene(mainLayout, 500, 350);
+        openedPositionsStage.setScene(scene);
+        openedPositionsStage.show();
     }
 
-    public void openedPositionsAction(ActionEvent actionEvent) {
-    }
+
+
     //***************************************************************************************************************************************
     //***************************************************************************************************************************************  //***************************************************************************************************************************************
     //    //***************************************************************************************************************************************
