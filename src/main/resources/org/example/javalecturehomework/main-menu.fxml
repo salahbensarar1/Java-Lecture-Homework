@@ -96,7 +96,16 @@
                 <MenuItem text="Parallel Example" onAction="#parallelAction"/>
             </items>
         </Menu>
-
+        <Menu text="Forex last">
+            <items>
+                <MenuItem text="Account Information" onAction="#accountInformationAction"/>
+                <MenuItem text="Current Prices" onAction="#currentPricesAction"/>
+                <MenuItem text="Historical Prices" onAction="#historicalPricesAction"/>
+                <MenuItem text="Position Opening" onAction="#positionOpeningAction"/>
+                <MenuItem text="Position Closing" onAction="#positionClosingAction"/>
+                <MenuItem text="Opened Positions" onAction="#openedPositionsAction"/>
+            </items>
+        </Menu>
 
     </MenuBar>
 </AnchorPane>

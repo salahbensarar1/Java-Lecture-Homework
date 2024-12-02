@@ -1301,6 +1301,24 @@ public class DatabaseMenuController {
         threadTwo.setDaemon(true);
         threadTwo.start();
     }
+
+    public void accountInformationAction(ActionEvent actionEvent) {
+    }
+
+    public void currentPricesAction(ActionEvent actionEvent) {
+    }
+
+    public void historicalPricesAction(ActionEvent actionEvent) {
+    }
+
+    public void positionClosingAction(ActionEvent actionEvent) {
+    }
+
+    public void positionOpeningAction(ActionEvent actionEvent) {
+    }
+
+    public void openedPositionsAction(ActionEvent actionEvent) {
+    }
     //***************************************************************************************************************************************
     //***************************************************************************************************************************************  //***************************************************************************************************************************************
     //    //***************************************************************************************************************************************
