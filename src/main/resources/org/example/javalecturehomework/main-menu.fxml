@@ -33,23 +33,22 @@
 
     <!-- Add Data Form Pane (Initially Hidden) -->
     <Pane fx:id="addDataPane" layoutX="250" layoutY="250" prefWidth="600" prefHeight="400" style="-fx-background-color: #f9f9f9; -fx-border-color: #ccc;" visible="false">
-        <Label fx:id="formTitle" layoutX="20" layoutY="10" text="Add New Record"/>
-        <Label fx:id="label1" layoutX="20" layoutY="50" text=""/>
-        <TextField fx:id="field1" layoutX="240" layoutY="50"/>
-        <Label fx:id="label2" layoutX="20" layoutY="100" text=""/>
-        <TextField fx:id="field2" layoutX="240" layoutY="100"/>
-        <Label fx:id="label3" layoutX="20" layoutY="150" text=""/>
-        <TextField fx:id="field3" layoutX="240" layoutY="150"/>
-        <Label fx:id="label4" layoutX="20" layoutY="200" text=""/>
-        <TextField fx:id="field4" layoutX="240" layoutY="200"/>
-        <Label fx:id="label5" layoutX="20" layoutY="250" text=""/>
-        <TextField fx:id="field5" layoutX="240" layoutY="250"/>
-        <ComboBox fx:id="matchIdComboBox" layoutX="240" layoutY="50" visible="false"/>
-        <ComboBox fx:id="spectatorIdComboBox" layoutX="240" layoutY="100" visible="false"/>
+        <Label fx:id="formAddTitle" layoutX="20" layoutY="10" text="Add New Record"/>
+        <Label fx:id="Addlabel1" layoutX="20" layoutY="50" text=""/>
+        <TextField fx:id="Addfield1" layoutX="240" layoutY="50"/>
+        <Label fx:id="Addlabel2" layoutX="20" layoutY="100" text=""/>
+        <TextField fx:id="Addfield2" layoutX="240" layoutY="100"/>
+        <Label fx:id="Addlabel3" layoutX="20" layoutY="150" text=""/>
+        <TextField fx:id="Addfield3" layoutX="240" layoutY="150"/>
+        <Label fx:id="Addlabel4" layoutX="20" layoutY="200" text=""/>
+        <TextField fx:id="Addfield4" layoutX="240" layoutY="200"/>
+        <Label fx:id="Addlabel5" layoutX="20" layoutY="250" text=""/>
+        <TextField fx:id="Addfield5" layoutX="240" layoutY="250"/>
+        <ComboBox fx:id="AddmatchIdComboBox" layoutX="240" layoutY="50" visible="false"/>
+        <ComboBox fx:id="AddspectatorIdComboBox" layoutX="240" layoutY="100" visible="false"/>
         <Button text="Submit" layoutX="100" layoutY="320" onAction="#submitAddData"/>
         <Button text="Cancel" layoutX="200" layoutY="320" onAction="#cancelAddData"/>
     </Pane>
-
     <!--End of  Add Data Form Pane -->
 
     <!-- Change Data Form Pane (Initially Hidden) -->
@@ -71,6 +70,28 @@
         <Button text="Cancel" layoutX="270" layoutY="320" onAction="#cancelChangeData"/>
     </Pane>
     <!-- End of Change Data Form Pane (Initially Hidden) -->
+
+    <Label fx:id="DeletelabelId" text="Select Record ID:" visible="false"  layoutX="50" layoutY="350"/>
+    <ComboBox fx:id="DeleterecordIdComboBox"  layoutX="150" layoutY="350" visible="false">
+        <items/>
+    </ComboBox>
+
+
+
+    <!-- Actual Delete Button -->
+    <Button fx:id="finalDeleteButton" text="Delete"  layoutX="100" layoutY="400" onAction="#deleteData" visible="false"/>
+    <Button fx:id="cancelDeleteButton" text="Cancel" layoutX="100" layoutY="520" onAction="#cancelDeleteData" visible="false" />
+
+
+
+
+    <MenuBar fx:id="menuBar">
+        <Menu text="SoapClient">
+            <MenuItem text="Download" onAction="#openDownloadForm"/>
+            <MenuItem text="Download2" onAction="#downloadFilteredSoapData"/>
+            <MenuItem text="Graph" onAction="#graphSoapData"/>
+        </Menu>
+    </MenuBar>
 </AnchorPane>
 
 

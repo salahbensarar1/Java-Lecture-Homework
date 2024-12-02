@@ -3,34 +3,68 @@ package org.example.javalecturehomework.controller;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.example.javalecturehomework.model.Entry;
 import org.example.javalecturehomework.model.Match;
 import org.example.javalecturehomework.model.Spectator;
+import org.example.javalecturehomework.service.MNBArfolyamServiceSoap;
+import org.example.javalecturehomework.service.MNBArfolyamServiceSoapImpl;
 import org.example.javalecturehomework.utils.DatabaseConnection;
 
-import java.awt.event.ActionEvent;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.*;
+import java.sql.Date;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class DatabaseMenuController {
+
+//***************************************************************************************************************************************
+    @FXML private TextField startDateField, endDateField;
+    @FXML private CheckBox eurCheckBox, usdCheckBox;
+    @FXML private Pane graphFormPane;
+    @FXML private ComboBox<String> graphDataComboBox;
+    @FXML private Pane download2FormPane;
 //***************************************************************************************************************************************
 
+    @FXML private Button finalDeleteButton;
+    @FXML private Button deleteButton;
+    @FXML private Button cancelDeleteButton;
 
-//    @FXML private ComboBox<String> matchComboBox, spectatorComboBox;
+
+    //    @FXML private ComboBox<String> matchComboBox, spectatorComboBox;
 @FXML private Pane changeDataPane; // The pane for the Change Data form
- @FXML private ComboBox<String> recordIdComboBox; // ComboBox to select record ID
+ @FXML private ComboBox<String> recordIdComboBox;
+ @FXML private ComboBox<String> DeleterecordIdComboBox;
     @FXML private Label labelId;
+    @FXML private Label DeletelabelId;
     @FXML private ComboBox<String> matchIdComboBox;
     @FXML private ComboBox<String> spectatorIdComboBox;
-    @FXML private Label formTitle, label1, label2, label3, label4, label5;
-    @FXML private TextField field1, field2, field3, field4, field5;
+    @FXML private Label formTitle, label1, label2, label3, label4;
+    @FXML private TextField field1, field2, field3, field4;
+    @FXML private Label formAddTitle, Addlabel1, Addlabel2, Addlabel3, Addlabel4, Addlabel5;
+    @FXML private TextField Addfield1, Addfield2, Addfield3, Addfield4, Addfield5;
     @FXML private Pane addDataPane;
     @FXML private ComboBox<String> filterComboBox;
     @FXML private TextField filterTextField;
@@ -286,6 +320,7 @@ public class DatabaseMenuController {
 //***************************************************************************************************************************************
 
 
+
     @FXML
     private void handleWriteAction() {
         String selectedTable = tableComboBox.getValue();
@@ -295,61 +330,61 @@ public class DatabaseMenuController {
             return;
         }
 
-        formTitle.setText("Add New Record to " + selectedTable);
+        formAddTitle.setText("Add New Record to " + selectedTable);
 
         // Set labels based on selected table
         switch (selectedTable) {
             case "matches":
-                label1.setText("ID");
-                label2.setText("Date");
-                label3.setText("Start Time");
-                label4.setText("Ticket Price");
-                label5.setText("Match Type");
-                label1.setVisible(true);
-                label2.setVisible(true);
-                label3.setVisible(true);
-                label4.setVisible(true);
-                label5.setVisible(true);
-                field1.setVisible(true);
-                field2.setVisible(true);
-                field3.setVisible(true);
-                field4.setVisible(true);
-                field5.setVisible(true);
+                Addlabel1.setText("ID");
+                Addlabel2.setText("Date");
+                Addlabel3.setText("Start Time");
+                Addlabel4.setText("Ticket Price");
+                Addlabel5.setText("Match Type");
+                Addlabel1.setVisible(true);
+                Addlabel2.setVisible(true);
+                Addlabel3.setVisible(true);
+                Addlabel4.setVisible(true);
+                Addlabel5.setVisible(true);
+                Addfield1.setVisible(true);
+                Addfield2.setVisible(true);
+                Addfield3.setVisible(true);
+                Addfield4.setVisible(true);
+                Addfield5.setVisible(true);
                 matchIdComboBox.setVisible(false);
                 spectatorIdComboBox.setVisible(false);
                 break;
             case "spectators":
-                label1.setText("ID");
-                label2.setText("Name");
-                label3.setText("Sex (1 -> Male OR 0 -> Female)");
-                label4.setText("has Pass 1 (1 -> YES OR 0 -> NO)");
-                label1.setVisible(true);
-                label2.setVisible(true);
-                label3.setVisible(true);
-                label4.setVisible(true);
-                label5.setVisible(false);
-                field1.setVisible(true);
-                field2.setVisible(true);
-                field3.setVisible(true);
-                field4.setVisible(true);
-                field5.setVisible(false);
+                Addlabel1.setText("ID");
+                Addlabel2.setText("Name");
+                Addlabel3.setText("Sex (1 -> Male OR 0 -> Female)");
+                Addlabel4.setText("has Pass 1 (1 -> YES OR 0 -> NO)");
+                Addlabel1.setVisible(true);
+                Addlabel2.setVisible(true);
+                Addlabel3.setVisible(true);
+                Addlabel4.setVisible(true);
+                Addlabel5.setVisible(false);
+                Addfield1.setVisible(true);
+                Addfield2.setVisible(true);
+                Addfield3.setVisible(true);
+                Addfield4.setVisible(true);
+                Addfield5.setVisible(false);
                 matchIdComboBox.setVisible(false);
                 spectatorIdComboBox.setVisible(false);
                 break;
             case "entries":
-                label1.setText("Match ID");
-                label2.setText("Spectator ID");
-                label3.setText("Time Stamp");
-                label1.setVisible(true);
-                label2.setVisible(true);
-                label3.setVisible(true);
-                label4.setVisible(false);
-                label5.setVisible(false);
-                field1.setVisible(false);
-                field2.setVisible(false);
-                field3.setVisible(true);
-                field4.setVisible(false);
-                field5.setVisible(false);
+                Addlabel1.setText("Match ID");
+                Addlabel2.setText("Spectator ID");
+                Addlabel3.setText("Time Stamp");
+                Addlabel1.setVisible(true);
+                Addlabel2.setVisible(true);
+                Addlabel3.setVisible(true);
+                Addlabel4.setVisible(false);
+                Addlabel5.setVisible(false);
+                Addfield1.setVisible(false);
+                Addfield2.setVisible(false);
+                Addfield3.setVisible(true);
+                Addfield4.setVisible(false);
+                Addfield5.setVisible(false);
                 matchIdComboBox.setVisible(true);
                 spectatorIdComboBox.setVisible(true);
                 loadComboBoxData();
@@ -361,15 +396,16 @@ public class DatabaseMenuController {
         }
 
         // Clear previous data in fields
-        field1.clear();
-        field2.clear();
-        field3.clear();
-        field4.clear();
-        field5.clear();
+        Addfield1.clear();
+        Addfield2.clear();
+        Addfield3.clear();
+        Addfield4.clear();
+        Addfield5.clear();
 
         // Show the form
         addDataPane.setVisible(true);
     }
+
 
     private void loadComboBoxData() {
         // Clear existing items
@@ -410,11 +446,11 @@ public class DatabaseMenuController {
         }
 
         // Collect data from form
-        String value1 = field1.getText();
-        String value2 = field2.getText();
-        String value3 = field3.getText();
-        String value4 = field4.getText();
-        String value5 = field5.getText();
+        String value1 = Addfield1.getText();
+        String value2 = Addfield2.getText();
+        String value3 = Addfield3.getText();
+        String value4 = Addfield4.getText();
+        String value5 = Addfield5.getText();
 
         // Prepare query
         String query = "";
@@ -466,7 +502,98 @@ public class DatabaseMenuController {
 
 
 //***************************************************************************************************************************************
-//***************************************************************************************************************************************
+//*********************************************Soap******************************************************************************************
+
+    private String downloadSoapData(String startDate, String endDate, String selectedCurrency) throws Exception {
+        MNBArfolyamServiceSoapImpl impl = new MNBArfolyamServiceSoapImpl();
+        MNBArfolyamServiceSoap service = impl.getCustomBindingMNBArfolyamServiceSoap();
+
+        return service.getExchangeRates(startDate, endDate, selectedCurrency);
+    }
+
+
+
+
+    private void saveDataToFile(String data) {
+        // Get the current project directory
+        String projectDirectory = System.getProperty("user.dir");
+
+        // Create the file path inside the project directory
+        File file = new File(projectDirectory + File.separator + "bank.txt");
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, false))) {
+            // Write the data to the file (overwrites the file if it already exists)
+            writer.write(data);
+        } catch (IOException e) {
+            // Show error if unable to save the file
+            showAlert("Error", "Failed to save the file: " + e.getMessage());
+        }
+    }
+
+
+    // Method to handle SOAP data download based on filters
+    private void downloadFilteredData(String startDate, String endDate, String currency, boolean includeMetaData, String dataOption, ProgressBar progressBar) {
+        MNBArfolyamServiceSoapImpl impl = new MNBArfolyamServiceSoapImpl();
+        MNBArfolyamServiceSoap service = impl.getCustomBindingMNBArfolyamServiceSoap();
+
+        try {
+            // Simulate data download progress
+            for (int i = 0; i <= 100; i += 10) {
+                final int progress = i;
+                Thread.sleep(50); // Simulate processing delay
+                progressBar.setProgress(progress / 100.0);
+            }
+
+            // Call SOAP service to get filtered data
+            String exchangeRates = service.getExchangeRates(startDate, endDate, currency);
+
+            // Add metadata or modify data if required
+            if (includeMetaData) {
+                exchangeRates += "\nMetadata: Data generated with option " + dataOption;
+            }
+
+            // Save data to Bank.txt
+            saveDataToFile(exchangeRates);
+
+            showAlert("Download Successful", "Filtered data has been saved to Bank.txt.");
+        } catch (Exception e) {
+            showAlert("Error", "An error occurred during the download: " + e.getMessage());
+        }
+    }
+    // Method to graph the data
+
+    private LineChart<String, Number> generateGraph(String startDate, String endDate, String currency, boolean includeMetaData) {
+        // Simulated data fetching and processing
+        ObservableList<XYChart.Data<String, Number>> data = FXCollections.observableArrayList();
+
+        Random random = new Random();
+        for (int i = 1; i <= 10; i++) {
+            data.add(new XYChart.Data<>("Day " + i, random.nextDouble() * 100)); // Simulated exchange rate
+        }
+
+        // Graph series
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Exchange Rate for " + currency + " (" + startDate + " to " + endDate + ")");
+        series.setData(data);
+
+        // Include metadata, if selected
+        if (includeMetaData) {
+            series.setName(series.getName() + " - Metadata Included");
+        }
+
+        // Line chart setup
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("Date");
+
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Exchange Rate");
+
+        LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
+        lineChart.getData().add(series);
+        lineChart.setTitle("Currency Exchange Rates");
+
+        return lineChart;
+    }
 //***************************************************************************************************************************************
 //***************************************************************************************************************************************
 
@@ -493,7 +620,6 @@ public class DatabaseMenuController {
                 label2.setVisible(true);
                 label3.setVisible(true);
                 label4.setVisible(true);
-                label5.setVisible(false);
                 field1.setVisible(true);
                 field2.setVisible(true);
                 field3.setVisible(true);
@@ -510,12 +636,10 @@ public class DatabaseMenuController {
                 label2.setVisible(true);
                 label3.setVisible(true);
                 label4.setVisible(false);
-                label5.setVisible(false);
                 field1.setVisible(true);
                 field2.setVisible(true);
                 field3.setVisible(true);
                 field4.setVisible(false);
-                field5.setVisible(false);
                 matchIdComboBox.setVisible(false);
                 spectatorIdComboBox.setVisible(false);
                 break;
@@ -530,12 +654,10 @@ public class DatabaseMenuController {
                 label2.setVisible(true);
                 label3.setVisible(true);
                 label4.setVisible(false);
-                label5.setVisible(false);
                 field1.setVisible(false);  // Hide text field for Match ID
                 field2.setVisible(false);  // Hide text field for Spectator ID
                 field3.setVisible(true);   // Show text field for Time Stamp
                 field4.setVisible(false);
-                field5.setVisible(false);
                 matchIdComboBox.setVisible(true);
                 spectatorIdComboBox.setVisible(true);
 
@@ -717,17 +839,401 @@ public class DatabaseMenuController {
     //***************************************************************************************************************************************
     //***************************************************************************************************************************************
     //***************************************************************************************************************************************
+    @FXML
+    private void handleDeleteAction() {
+        String selectedTable = tableComboBox.getValue();
 
+        // Check if a table is selected
+        if (selectedTable == null) {
+            System.out.println("Please select a table to delete from.");
+            return;
+        }
+
+        // Show the record selection options (ComboBox and final Delete button)
+        deleteButton.setVisible(false);  // Hide the "Delete Data" button once clicked
+        DeletelabelId.setVisible(true);  // Make the "Select Record ID" label visible
+        DeleterecordIdComboBox.setVisible(true);  // Make the record ID ComboBox visible
+        finalDeleteButton.setVisible(true);  // Make the final "Delete" button visible
+        cancelDeleteButton.setVisible(true);
+
+        // Load the record IDs for the selected table
+        loadRecordIds(selectedTable);
+    }
+
+
+    private void loadRecordIds(String selectedTable) {
+        DeleterecordIdComboBox.getItems().clear();  // Clear existing items from the ComboBox
+
+        // Define the query to fetch IDs for the selected table
+        String query = "SELECT id FROM " + selectedTable;
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(query)) {
+
+            while (resultSet.next()) {
+                DeleterecordIdComboBox.getItems().add(resultSet.getString("id"));
+            }
+
+            // If no IDs are loaded, show an alert
+            if (DeleterecordIdComboBox.getItems().isEmpty()) {
+                showAlert("No Records", "No records found in the selected table.");
+            }
+        } catch (SQLException e) {
+            showAlert("Error", "Error loading record IDs: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void submitDeleteData() {
+        String selectedTable = tableComboBox.getValue();
+        String selectedId = DeleterecordIdComboBox.getValue();
+
+        // Check if both a table and record ID are selected
+        if (selectedId == null || selectedTable == null) {
+            showAlert("Error", "Please select both a table and record ID to delete.");
+            return;
+        }
+
+        // Define the DELETE query
+        String query = "DELETE FROM " + selectedTable + " WHERE id = ?";
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            // Set the ID parameter
+            preparedStatement.setString(1, selectedId);
+
+            // Execute the DELETE query
+            int rowsDeleted = preparedStatement.executeUpdate();
+
+            if (rowsDeleted > 0) {
+                showAlert("Success", "Record deleted successfully.");
+            } else {
+                showAlert("Failure", "No record was deleted. Please check if the ID exists.");
+            }
+        } catch (SQLException e) {
+            showAlert("Error", "Error deleting record: " + e.getMessage());
+        }
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
 
 
 
 
 
     @FXML
-    private void handleDeleteAction() {
-        System.out.println("Deleting data...");
-        // Implement the logic for deleting data from the database
-        // You can use a selected row or some other criteria to delete data
+    private void deleteData() {
+        String selectedTable = tableComboBox.getValue();
+        String selectedId = DeleterecordIdComboBox.getValue();
+
+        // Check if both a table and record ID are selected
+        if (selectedTable == null || selectedId == null) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("No Entry Selected");
+            alert.setHeaderText(null);
+            alert.setContentText("Please select both a table and a record ID to delete.");
+            alert.showAndWait();
+            return;
+        }
+
+        // Display a confirmation dialog before deletion
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Delete Record");
+        alert.setContentText("Are you sure you want to delete the record with ID " + selectedId + " from the table " + selectedTable + "?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            deleteRecord(selectedTable, selectedId);
+        }
+
+        // Reload the record IDs after deletion attempt
+        loadRecordIds(selectedTable);
     }
 
+    private void deleteRecord(String selectedTable, String selectedId) {
+        // Define the DELETE query
+        String query = "DELETE FROM " + selectedTable + " WHERE id = ?";
+
+        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/java_homework", "root", "mynewpass");
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
+            // Set the ID parameter
+            preparedStatement.setString(1, selectedId);
+
+            // Execute the DELETE query
+            int rowsDeleted = preparedStatement.executeUpdate();
+
+            if (rowsDeleted > 0) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Record Deleted");
+                alert.setContentText("Record with ID " + selectedId + " was successfully deleted.");
+                alert.showAndWait();
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Deletion Failed");
+                alert.setContentText("No record was deleted. Please check the ID or table.");
+                alert.showAndWait();
+            }
+        } catch (SQLException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error Deleting Record");
+            alert.setContentText("Error deleting record: " + e.getMessage());
+            alert.showAndWait();
+        }
+    }
+    @FXML
+    private void cancelDeleteData() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Cancel Delete");
+        alert.setHeaderText(null);
+        alert.setContentText("Are you sure you want to cancel the delete operation?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            // Hide delete-related elements
+            DeletelabelId.setVisible(false);
+            DeleterecordIdComboBox.setVisible(false);
+            finalDeleteButton.setVisible(false);
+
+            // Clear ComboBox selection and items
+            DeleterecordIdComboBox.getSelectionModel().clearSelection();
+            DeleterecordIdComboBox.getItems().clear();
+            deleteButton.setVisible(true);
+        }
+    }
+
+    //***************************************************************************************************************************************
+    //***************************************************************************************************************************************
+    public void openDownloadForm(ActionEvent actionEvent) {
+        // Create a new window
+        Stage downloadStage = new Stage();
+        downloadStage.setTitle("Download SOAP Data");
+
+        // Create input fields
+        Label startDateLabel = new Label("Start Date:");
+        DatePicker startDatePicker = new DatePicker(); // Use DatePicker for start date
+
+        Label endDateLabel = new Label("End Date:");
+        DatePicker endDatePicker = new DatePicker(); // Use DatePicker for end date
+
+        Label currencyLabel = new Label("Currency:");
+        ComboBox<String> currencyComboBox = new ComboBox<>();
+        currencyComboBox.getItems().addAll("USD", "EUR", "HUF"); // Available currencies
+
+        // Create a ProgressBar
+        ProgressBar progressBar = new ProgressBar(0);
+        progressBar.setPrefWidth(200);
+
+        // Create a button to start the download
+        Button downloadButton = new Button("Download Data");
+        downloadButton.setOnAction(e -> {
+            LocalDate startDate = startDatePicker.getValue();
+            LocalDate endDate = endDatePicker.getValue();
+            String selectedCurrency = currencyComboBox.getValue();
+
+            if (startDate == null || endDate == null || selectedCurrency == null) {
+                showAlert("Error", "Please fill in all fields.");
+                return;
+            }
+
+            // Validate that the start date is not after the end date
+            if (startDate.isAfter(endDate)) {
+                showAlert("Error", "Start date cannot be after the end date.");
+                return;
+            }
+
+            // Start the download in a new thread to update the ProgressBar
+            Thread downloadThread = new Thread(() -> {
+                try {
+                    // Simulate progress updates
+                    for (int i = 0; i <= 100; i++) {
+                        double progress = i / 100.0;
+                        Thread.sleep(10); // Simulate progress delay
+                        final int currentProgress = i;
+
+                        // Update ProgressBar in the JavaFX Application Thread
+                        javafx.application.Platform.runLater(() -> progressBar.setProgress(progress));
+                    }
+
+                    // Perform the actual download
+                    String exchangeRates = downloadSoapData(startDate.toString(), endDate.toString(), selectedCurrency);
+
+                    // Save the data to a file
+                    saveDataToFile(exchangeRates);
+
+                    // Show success alert (must run on JavaFX Application Thread)
+                    javafx.application.Platform.runLater(() ->
+                            showAlert("Download Successful", "All data has been downloaded to bank.txt.")
+                    );
+
+                } catch (Exception ex) {
+                    javafx.application.Platform.runLater(() ->
+                            showAlert("Error", "An error occurred during the download: " + ex.getMessage())
+                    );
+                }
+            });
+
+            downloadThread.start();
+        });
+
+        // Add components to the new window
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(10));
+        vbox.getChildren().addAll(
+                startDateLabel, startDatePicker,
+                endDateLabel, endDatePicker,
+                currencyLabel, currencyComboBox,
+                progressBar, downloadButton
+        );
+
+        // Configure the scene and show the new window
+        Scene scene = new Scene(vbox, 300, 350);
+        downloadStage.setScene(scene);
+        downloadStage.show();
+    }
+
+    public void downloadFilteredSoapData(javafx.event.ActionEvent actionEvent){
+        // Create a new stage for the form
+        Stage filterStage = new Stage();
+        filterStage.setTitle("Download Filtered SOAP Data");
+
+        // Create input components
+        Label startDateLabel = new Label("Start Date:");
+        DatePicker startDatePicker = new DatePicker();
+
+        Label endDateLabel = new Label("End Date:");
+        DatePicker endDatePicker = new DatePicker();
+
+        Label currencyLabel = new Label("Currency:");
+        ComboBox<String> currencyComboBox = new ComboBox<>();
+        currencyComboBox.getItems().addAll("USD", "EUR", "HUF");
+
+        Label optionsLabel = new Label("Additional Options:");
+        CheckBox includeMetaDataCheckbox = new CheckBox("Include Metadata");
+        RadioButton detailedDataRadio = new RadioButton("Detailed Data");
+        RadioButton summaryDataRadio = new RadioButton("Summary Data");
+
+        // Group radio buttons
+        ToggleGroup dataOptionsGroup = new ToggleGroup();
+        detailedDataRadio.setToggleGroup(dataOptionsGroup);
+        summaryDataRadio.setToggleGroup(dataOptionsGroup);
+
+        // Add a ProgressBar
+        ProgressBar progressBar = new ProgressBar(0);
+        progressBar.setPrefWidth(300);
+        progressBar.setVisible(false); // Hidden initially
+
+        // Create download button
+        Button downloadButton = new Button("Download Data");
+        downloadButton.setOnAction(e -> {
+            LocalDate startDate = startDatePicker.getValue();
+            LocalDate endDate = endDatePicker.getValue();
+            String selectedCurrency = currencyComboBox.getValue();
+            boolean includeMetaData = includeMetaDataCheckbox.isSelected();
+            RadioButton selectedDataOption = (RadioButton) dataOptionsGroup.getSelectedToggle();
+
+            if (startDate == null || endDate == null || selectedCurrency == null || selectedDataOption == null) {
+                showAlert("Error", "Please fill in all fields.");
+                return;
+            }
+
+            if (((java.time.LocalDate) startDate).isAfter(endDate)) {
+                showAlert("Error", "Start date cannot be after end date.");
+                return;
+            }
+
+            String dataOption = selectedDataOption.getText();
+
+            // Start the SOAP data download
+            progressBar.setVisible(true);
+            downloadFilteredData(startDate.toString(), endDate.toString(), selectedCurrency, includeMetaData, dataOption, progressBar);
+        });
+
+        // Arrange components in a layout
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(10));
+        vbox.getChildren().addAll(
+                startDateLabel, startDatePicker,
+                endDateLabel, endDatePicker,
+                currencyLabel, currencyComboBox,
+                optionsLabel, includeMetaDataCheckbox, detailedDataRadio, summaryDataRadio,
+                progressBar, downloadButton
+        );
+
+        // Set the scene and show the stage
+        Scene scene = new Scene(vbox, 350, 400);
+        filterStage.setScene(scene);
+        filterStage.show();
+    }
+
+    public void graphSoapData(ActionEvent actionEvent) {
+        {
+            // Create a new window for the graph form
+            Stage graphStage = new Stage();
+            graphStage.setTitle("Graph SOAP Data");
+
+            // Input fields and controls
+            Label startDateLabel = new Label("Start Date:");
+            DatePicker startDatePicker = new DatePicker();
+
+            Label endDateLabel = new Label("End Date:");
+            DatePicker endDatePicker = new DatePicker();
+
+            Label currencyLabel = new Label("Currency:");
+            ComboBox<String> currencyComboBox = new ComboBox<>();
+            currencyComboBox.getItems().addAll("USD", "EUR", "HUF");
+
+            CheckBox includeMetaDataCheckBox = new CheckBox("Include Metadata");
+
+            Button generateGraphButton = new Button("Generate Graph");
+
+            // Graph container
+            VBox graphContainer = new VBox(10);
+
+            generateGraphButton.setOnAction(e -> {
+                String startDate = startDatePicker.getValue() != null ? startDatePicker.getValue().toString() : "";
+                String endDate = endDatePicker.getValue() != null ? endDatePicker.getValue().toString() : "";
+                String selectedCurrency = currencyComboBox.getValue();
+
+                if (startDate.isEmpty() || endDate.isEmpty() || selectedCurrency == null) {
+                    showAlert("Error", "Please fill in all fields.");
+                    return;
+                }
+
+                // Clear previous graph, if any
+                graphContainer.getChildren().clear();
+
+                // Generate a new graph
+                LineChart<String, Number> lineChart = generateGraph(startDate, endDate, selectedCurrency, includeMetaDataCheckBox.isSelected());
+                graphContainer.getChildren().add(lineChart);
+            });
+
+            // Layout setup
+            VBox vbox = new VBox(10);
+            vbox.setPadding(new javafx.geometry.Insets(10));
+            vbox.getChildren().addAll(
+                    startDateLabel, startDatePicker,
+                    endDateLabel, endDatePicker,
+                    currencyLabel, currencyComboBox,
+                    includeMetaDataCheckBox,
+                    generateGraphButton,
+                    graphContainer
+            );
+
+            Scene scene = new Scene(vbox, 800, 600);
+            graphStage.setScene(scene);
+            graphStage.show();
+        }
+    }
+    //***************************************************************************************************************************************
+    //***************************************************************************************************************************************  //***************************************************************************************************************************************
+    //    //***************************************************************************************************************************************
 }
