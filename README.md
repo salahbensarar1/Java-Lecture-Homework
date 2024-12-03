@@ -1,8 +1,8 @@
 # Spectator Management System
 
 ### Developed by:
-- **Salah Ben Sarar**
-- **Edgar Hamilton**
+- **Salah Ben Sarar RZ49TP**
+- **Edgar Hamilton G82TJA**
 
 [GitHub Repository Link](#)
 
@@ -97,6 +97,13 @@ Integrated with the **Oanda API** to manage Forex data and operations.
 - **SOAP Integration**: Hungarian National Bank API
 - **Forex API**: Oanda API
 - **Version Control**: GitHub
+---
+
+# To run the JAR file
+ 
+```plaintext
+java --module-path /Users/salahbensarar/Downloads/javafx-sdk-17.0.13/lib --add-modules javafx.controls,javafx.fxml -Dprism.order=sw -jar Java-Lecture-Homework.jar
+```
 
 ---
 
